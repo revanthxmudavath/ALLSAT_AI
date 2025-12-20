@@ -1,0 +1,849 @@
+"""
+ALLSAT AI - Environmental Warning & Intelligence System (EWIS)
+Streamlit Prototype for Sentinel-2 Vegetation Monitoring & ERA5-Land Climate Analysis
+"""
+
+import streamlit as st
+import os
+import glob
+import numpy as np
+import rasterio
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+from io import BytesIO
+import tempfile
+
+# Import custom modules
+from sentinel_processor import (
+    SentinelDataManager,
+    VegetationAlertSystem,
+    setup_cdse_config,
+    load_cdse_config
+)
+from era5_processor import (
+    ERA5DataManager,
+    ClimateAlertSystem,
+    CoordinateError
+)
+
+# Page config
+st.set_page_config(
+    page_title="ALLSAT AI - EWIS",
+    page_icon="🛰️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS for better UI
+st.markdown("""
+    <style>
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f77b4;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .sub-header {
+        font-size: 1.2rem;
+        text-align: center;
+        color: #666;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    .alert-critical {
+        background-color: #ffebee;
+        padding: 1rem;
+        border-left: 4px solid #f44336;
+        margin: 0.5rem 0;
+    }
+    .alert-high {
+        background-color: #fff3e0;
+        padding: 1rem;
+        border-left: 4px solid #ff9800;
+        margin: 0.5rem 0;
+    }
+    .alert-medium {
+        background-color: #e3f2fd;
+        padding: 1rem;
+        border-left: 4px solid #2196f3;
+        margin: 0.5rem 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+def visualize_tiff_files(ndvi_path, ndmi_path, nodata=-9999):
+    """
+    Visualize NDVI and NDMI .tif files
+    """
+    # Debug: Check if files exist and are valid
+    import os
+    if not os.path.exists(ndvi_path):
+        raise FileNotFoundError(f"NDVI file not found: {ndvi_path}")
+    if not os.path.exists(ndmi_path):
+        raise FileNotFoundError(f"NDMI file not found: {ndmi_path}")
+    
+    # Check file sizes
+    with rasterio.open(ndvi_path) as src:
+        print(f"NDVI dimensions: {src.width} x {src.height}")
+        if src.width == 0 or src.height == 0:
+            raise ValueError(f"Invalid NDVI dimensions: {src.width} x {src.height}")
+    
+    with rasterio.open(ndmi_path) as src:
+        print(f"NDMI dimensions: {src.width} x {src.height}")
+        if src.width == 0 or src.height == 0:
+            raise ValueError(f"Invalid NDMI dimensions: {src.width} x {src.height}")
+    
+    fig, axes = plt.subplots(1, 2, figsize=(15, 8))
+    
+    # NDVI visualization
+    with rasterio.open(ndvi_path) as src:
+        ndvi = src.read(1).astype(np.float32)
+        ndvi_masked = np.ma.masked_where(ndvi == nodata, ndvi)
+        
+        cmap_ndvi = plt.cm.RdYlGn.copy()
+        cmap_ndvi.set_bad(color='black')
+        
+        im1 = axes[0].imshow(ndvi_masked, cmap=cmap_ndvi, vmin=-0.1, vmax=0.9)
+        axes[0].set_title("NDVI (Vegetation Health)", fontsize=16, fontweight='bold')
+        axes[0].axis('off')
+        plt.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04, label='NDVI Value')
+    
+    # NDMI visualization
+    with rasterio.open(ndmi_path) as src:
+        ndmi = src.read(1).astype(np.float32)
+        ndmi_masked = np.ma.masked_where(ndmi == nodata, ndmi)
+        
+        cmap_ndmi = plt.cm.BrBG.copy()
+        cmap_ndmi.set_bad(color='black')
+        
+        im2 = axes[1].imshow(ndmi_masked, cmap=cmap_ndmi, vmin=-0.4, vmax=0.6)
+        axes[1].set_title("NDMI (Moisture Content)", fontsize=16, fontweight='bold')
+        axes[1].axis('off')
+        plt.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04, label='NDMI Value')
+    
+    # Add legend
+    fig.text(0.5, 0.02, "Black = Excluded pixels (clouds/snow/no-data)",
+             ha="center", va="bottom", fontsize=12, style='italic')
+    
+    plt.tight_layout(rect=[0, 0.04, 1, 1])
+    
+    # Save to buffer
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0.1)
+    buf.seek(0)
+    plt.close()
+    
+    return buf
+
+
+def visualize_climate_data(data):
+    """
+    Visualize ERA5 climate data time series
+    
+    Args:
+        data: Climate data dictionary with time series
+        
+    Returns:
+        BytesIO: Buffer containing the matplotlib figure
+    """
+    fig, axes = plt.subplots(3, 1, figsize=(14, 10))
+    
+    times = data['times']
+    
+    # Temperature plot
+    axes[0].plot(times, data['temp_c'], 'r-', linewidth=2, label='Temperature')
+    axes[0].set_ylabel('Temperature (°C)', fontsize=12, fontweight='bold')
+    axes[0].set_title('Temperature Over Time', fontsize=14, fontweight='bold')
+    axes[0].grid(True, alpha=0.3)
+    axes[0].axhline(y=0, color='blue', linestyle='--', alpha=0.5, label='Freezing Point')
+    axes[0].legend()
+    
+    # Precipitation plot
+    axes[1].bar(times, data['precip_mm'], color='steelblue', alpha=0.7, width=20)
+    axes[1].set_ylabel('Precipitation (mm)', fontsize=12, fontweight='bold')
+    axes[1].set_title('Monthly Precipitation', fontsize=14, fontweight='bold')
+    axes[1].grid(True, alpha=0.3, axis='y')
+    
+    # Soil moisture plot
+    axes[2].plot(times, data['soil_moisture'], 'g-', linewidth=2, marker='o', label='Soil Moisture')
+    axes[2].set_ylabel('Soil Moisture (m³/m³)', fontsize=12, fontweight='bold')
+    axes[2].set_xlabel('Date', fontsize=12, fontweight='bold')
+    axes[2].set_title('Soil Moisture (Top Layer)', fontsize=14, fontweight='bold')
+    axes[2].grid(True, alpha=0.3)
+    axes[2].legend()
+    
+    # Format x-axis
+    for ax in axes:
+        ax.tick_params(axis='x', rotation=45)
+    
+    plt.tight_layout()
+    
+    # Save to buffer
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+    buf.seek(0)
+    plt.close()
+    
+    return buf
+
+def process_sentinel_data(address, client_id, client_secret, buffer_km, days_back, max_cloud, resolution, thresholds):
+    """
+    Main processing function for Sentinel-2 data
+    
+    Returns:
+        dict: Results including stats, alerts, and file paths
+    """
+    # Create output directory
+    output_dir = tempfile.mkdtemp(prefix='sentinel_')
+    
+    # Setup config
+    try:
+        config = load_cdse_config("cdse")
+    except:
+        config = setup_cdse_config(client_id, client_secret, "cdse")
+    
+    # Initialize manager
+    manager = SentinelDataManager(config)
+    
+    # Geocode address
+    st.info(f"🗺️ Geocoding address: {address}")
+    lat, lon, formatted_address = manager.geocode_address(address)
+    
+    # Create bounding box
+    bbox, bbox_coords = manager.create_bbox_from_point(lat, lon, buffer_km)
+    
+    # Define time interval
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=days_back)
+    time_interval = (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
+    
+    # Search catalog
+    st.info(f"🔍 Searching Sentinel-2 catalog from {time_interval[0]} to {time_interval[1]}")
+    results = manager.search_sentinel2_data(bbox, time_interval, max_cloud)
+    
+    if len(results) == 0:
+        st.error("❌ No suitable images found for this location and time period")
+        return None
+    
+    st.success(f"✅ Found {len(results)} images with cloud coverage < {max_cloud}%")
+    
+    # Download and process
+    st.info("📡 Downloading and processing satellite imagery...")
+    output = manager.download_ndvi_ndmi(
+        bbox,
+        time_interval,
+        resolution,
+        output_dir,
+        max_cloud_coverage=max_cloud,
+        mosaicking_order="leastCC"
+    )
+    
+    # Analyze indices
+    st.info("📊 Analyzing vegetation indices...")
+    stats = manager.analyze_indices(output['ndvi_data'], output['ndmi_data'])
+    
+    # Check thresholds and generate alerts
+    alert_system = VegetationAlertSystem(thresholds)
+    alerts = alert_system.check_thresholds(stats)
+    
+    # Generate report
+    location_info = {
+        'address': formatted_address,
+        'latitude': lat,
+        'longitude': lon,
+        'buffer_km': buffer_km
+    }
+    
+    report = alert_system.format_alert_report(location_info, stats, alerts)
+    
+    return {
+        'location': location_info,
+        'statistics': stats,
+        'alerts': alerts,
+        'report': report,
+        'files': {
+            'ndvi': output['ndvi'],
+            'ndmi': output['ndmi']
+        }
+    }
+
+
+def process_era5_data(address, lat, lon, cds_key, start_date, end_date, thresholds):
+    """
+    Main processing function for ERA5-Land climate data
+    
+    Returns:
+        dict: Results including climate data, alerts, and file paths
+    """
+    # Create output directory
+    output_dir = tempfile.mkdtemp(prefix='era5_')
+    
+    # Initialize manager
+    manager = ERA5DataManager(cds_key)
+    
+    # Fetch data
+    st.info(f"📡 Fetching ERA5-Land climate data from CDS API...")
+    st.warning("⏳ This may take 2-3 minutes depending on CDS queue. Please be patient.")
+    
+    variables = [
+        '2m_temperature',
+        'total_precipitation',
+        'volumetric_soil_water_layer_1'
+    ]
+    
+    try:
+        ds, netcdf_path = manager.fetch_era5_for_location(
+            lat, lon, start_date, end_date, variables, output_dir
+        )
+        
+        st.success("✅ Data downloaded successfully")
+        
+        # Process data and check alerts
+        st.info("📊 Analyzing climate data...")
+        data, alerts = manager.process_era5_for_alerts(
+            netcdf_path, lat, lon, thresholds, max_distance_km=50, verbose=True
+        )
+        
+        # Generate report
+        location_info = {
+            'address': address,
+            'latitude': lat,
+            'longitude': lon
+        }
+        
+        alert_system = ClimateAlertSystem(thresholds)
+        report = alert_system.format_climate_report(location_info, data, alerts)
+        
+        return {
+            'location': location_info,
+            'data': data,
+            'alerts': alerts,
+            'report': report,
+            'netcdf_path': netcdf_path
+        }
+        
+    except CoordinateError as e:
+        st.error(f"❌ Coordinate Error: {str(e)}")
+        return None
+    except Exception as e:
+        st.error(f"❌ Error processing ERA5 data: {str(e)}")
+        st.exception(e)
+        return None
+
+def display_results(results):
+    """Display analysis results in Streamlit UI"""
+    
+    st.markdown("---")
+    st.markdown("## 📍 Location Information")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Address", results['location']['address'])
+        st.metric("Latitude", f"{results['location']['latitude']:.4f}°N")
+    with col2:
+        st.metric("Longitude", f"{results['location']['longitude']:.4f}°W")
+        st.metric("Coverage Area", f"{results['location']['buffer_km']} km radius")
+    
+    st.markdown("---")
+    st.markdown("## 🌱 Vegetation Indices")
+    
+    stats = results['statistics']
+    
+    # NDVI metrics
+    st.markdown("### NDVI (Normalized Difference Vegetation Index)")
+    st.caption("Measures vegetation health and density (-1.0 to +1.0)")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Average", f"{stats['ndvi_mean']:.3f}")
+    with col2:
+        st.metric("Minimum", f"{stats['ndvi_min']:.3f}")
+    with col3:
+        st.metric("Maximum", f"{stats['ndvi_max']:.3f}")
+    with col4:
+        st.metric("Std Dev", f"{stats['ndvi_std']:.3f}")
+    
+    # NDVI interpretation
+    with st.expander("📖 NDVI Interpretation Guide"):
+        st.markdown("""
+        - **< 0.2**: Bare soil, rocks, water
+        - **0.2 - 0.3**: Sparse vegetation
+        - **0.3 - 0.6**: Moderate vegetation ✓
+        - **0.6 - 0.8**: Dense vegetation ✓✓
+        - **> 0.8**: Very dense vegetation
+        """)
+    
+    st.markdown("---")
+    
+    # NDMI metrics
+    st.markdown("### NDMI (Normalized Difference Moisture Index)")
+    st.caption("Measures plant water content and stress (-1.0 to +1.0)")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Average", f"{stats['ndmi_mean']:.3f}")
+    with col2:
+        st.metric("Minimum", f"{stats['ndmi_min']:.3f}")
+    with col3:
+        st.metric("Maximum", f"{stats['ndmi_max']:.3f}")
+    with col4:
+        st.metric("Std Dev", f"{stats['ndmi_std']:.3f}")
+    
+    # NDMI interpretation
+    with st.expander("📖 NDMI Interpretation Guide"):
+        st.markdown("""
+        - **< 0.0**: Severe drought stress ⚠️
+        - **0.0 - 0.2**: Moderate stress
+        - **0.2 - 0.4**: Adequate moisture ✓
+        - **> 0.4**: High moisture content
+        """)
+    
+    st.markdown("---")
+    
+    # Data Quality
+    st.markdown("## 📊 Data Quality")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Cloud Coverage", f"{stats['cloud_percentage']:.1f}%")
+    with col2:
+        st.metric("Valid Pixels", f"{stats['valid_pixels']:,} / {stats['total_pixels']:,}")
+    
+    st.markdown("---")
+    
+    # Alerts
+    st.markdown("## ⚠️ Alert Status")
+    
+    if results['alerts']:
+        st.warning(f"**{len(results['alerts'])} Alert(s) Detected**")
+        
+        for i, alert in enumerate(results['alerts'], 1):
+            severity_class = f"alert-{alert['severity'].lower()}"
+            
+            st.markdown(f"""
+            <div class="{severity_class}" style="color: #333;">
+                <h4 style="color: #000; margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']}] {alert['type']}</h4>
+                <p style="color: #333; margin: 0.25rem 0;"><strong>Message:</strong> {alert['message']}</p>
+                <p style="color: #333; margin: 0.25rem 0;"><strong>Value:</strong> {alert['value']:.3f} | <strong>Threshold:</strong> {alert['threshold']:.3f}</p>
+                <p style="color: #555; margin: 0.25rem 0;">💡 <em>{alert.get('recommendation', 'Monitor the situation closely.')}</em></p>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.success("✅ **No Alerts** - All parameters within normal range")
+    
+    st.markdown("---")
+    
+    # Visualizations
+    st.markdown("## 🗺️ Satellite Imagery Analysis")
+    
+    st.info("Generating visualizations from satellite data...")
+    
+    try:
+        img_buffer = visualize_tiff_files(
+            results['files']['ndvi'],
+            results['files']['ndmi']
+        )
+        st.image(img_buffer)
+    except Exception as e:
+        st.error(f"Error generating visualizations: {str(e)}")
+    
+    st.markdown("---")
+    
+    # Download report
+    st.markdown("## 📄 Download Report")
+    
+    st.download_button(
+        label="📥 Download Full Report",
+        data=results['report'],
+        file_name=f"allsat_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+        mime="text/plain"
+    )
+
+
+def display_era5_results(results):
+    """Display ERA5 climate analysis results in Streamlit UI"""
+    
+    st.markdown("---")
+    st.markdown("## 📍 Location Information")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Address", results['location']['address'])
+        st.metric("Latitude", f"{results['location']['latitude']:.4f}°N")
+    with col2:
+        st.metric("Longitude", f"{results['location']['longitude']:.4f}°W")
+        st.metric("Data Distance", f"{results['data']['distance_km']:.1f} km")
+    
+    st.markdown("---")
+    st.markdown("## 🌡️ Climate Metrics")
+    
+    data = results['data']
+    
+    # Temperature metrics
+    st.markdown("### Temperature (2m above ground)")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Average", f"{data['avg_temp_c']:.1f}°C ({data['avg_temp_f']:.1f}°F)")
+    with col2:
+        st.metric("Maximum", f"{data['max_temp_c']:.1f}°C ({data['max_temp_f']:.1f}°F)")
+    with col3:
+        st.metric("Minimum", f"{data['min_temp_c']:.1f}°C ({data['min_temp_f']:.1f}°F)")
+    
+    st.markdown("---")
+    
+    # Precipitation metrics
+    st.markdown("### Precipitation")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total", f"{data['total_precip_mm']:.1f} mm")
+    with col2:
+        st.metric("Average/Month", f"{data['avg_precip_mm']:.1f} mm")
+    with col3:
+        st.metric("Max in Month", f"{data['max_precip_mm']:.1f} mm")
+    
+    st.markdown("---")
+    
+    # Soil moisture metrics
+    st.markdown("### Soil Moisture (Top Layer)")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Average", f"{data['avg_soil_moisture']:.3f} m³/m³")
+    with col2:
+        st.metric("Minimum", f"{data['min_soil_moisture']:.3f} m³/m³")
+    with col3:
+        st.metric("Maximum", f"{data['max_soil_moisture']:.3f} m³/m³")
+    
+    st.markdown("---")
+    
+    # Time period
+    st.markdown("## 📅 Time Period")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Start Date", data['period_start'].strftime('%Y-%m-%d'))
+    with col2:
+        st.metric("End Date", data['period_end'].strftime('%Y-%m-%d'))
+    with col3:
+        st.metric("Duration", f"{data['n_months']} months")
+    
+    st.markdown("---")
+    
+    # Alerts
+    st.markdown("## ⚠️ Alert Status")
+    
+    if results['alerts']:
+        st.warning(f"**{len(results['alerts'])} Alert(s) Detected**")
+        
+        for i, alert in enumerate(results['alerts'], 1):
+            severity_class = f"alert-{alert['severity'].lower()}"
+            
+            st.markdown(f"""
+            <div class="{severity_class}">
+                <h4>[{i}] [{alert['severity']}] {alert['type']}</h4>
+                <p><strong>Message:</strong> {alert['message']}</p>
+                <p><strong>Value:</strong> {alert['value']:.2f} | <strong>Threshold:</strong> {alert['threshold']:.2f}</p>
+                <p>💡 <em>{alert.get('recommendation', 'Monitor the situation closely.')}</em></p>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.success("✅ **No Alerts** - All parameters within normal range")
+    
+    st.markdown("---")
+    
+    # Visualizations
+    st.markdown("## 📈 Climate Data Trends")
+    
+    st.info("Generating time series visualizations...")
+    
+    try:
+        img_buffer = visualize_climate_data(data)
+        st.image(img_buffer)
+    except Exception as e:
+        st.error(f"Error generating visualizations: {str(e)}")
+    
+    st.markdown("---")
+    
+    # Download report
+    st.markdown("## 📄 Download Report")
+    
+    st.download_button(
+        label="📥 Download Climate Report",
+        data=results['report'],
+        file_name=f"allsat_climate_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+        mime="text/plain"
+    )
+
+
+def main():
+    """Main Streamlit application"""
+    
+    # Header
+    st.markdown('<div class="main-header">🛰️ ALLSAT AI - EWIS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Environmental Warning & Intelligence System</div>', unsafe_allow_html=True)
+    st.caption("Sentinel-2 Vegetation Monitoring + ERA5-Land Climate Analysis")
+    
+    # Sidebar - Configuration
+    st.sidebar.header("⚙️ Configuration")
+    
+    # Analysis type selection
+    st.sidebar.subheader("Analysis Type")
+    analysis_type = st.sidebar.radio(
+        "Select Analysis",
+        ["🛰️ Sentinel-2 (Vegetation)", "🌡️ ERA5-Land (Climate)", "📊 Both"],
+        help="Choose which analysis to run"
+    )
+    
+    st.sidebar.markdown("---")
+    
+    # API Credentials
+    st.sidebar.subheader("API Credentials")
+    
+    show_sentinel = analysis_type in ["🛰️ Sentinel-2 (Vegetation)", "📊 Both"]
+    show_era5 = analysis_type in ["🌡️ ERA5-Land (Climate)", "📊 Both"]
+    
+    if show_sentinel:
+        client_id = st.sidebar.text_input(
+            "Copernicus Client ID",
+            value=st.secrets.get("COPERNICUS_CLIENT_ID", ""),
+            type="password",
+            help="Sentinel Hub OAuth Client ID"
+        )
+        client_secret = st.sidebar.text_input(
+            "Copernicus Client Secret",
+            value=st.secrets.get("COPERNICUS_CLIENT_SECRET", ""),
+            type="password",
+            help="Sentinel Hub OAuth Client Secret"
+        )
+    else:
+        client_id, client_secret = None, None
+    
+    if show_era5:
+        cds_key = st.sidebar.text_input(
+            "CDS API Key",
+            value=st.secrets.get("CDS_API_KEY", ""),
+            type="password",
+            help="Format: UID:API-key from https://cds.climate.copernicus.eu/"
+        )
+    else:
+        cds_key = None
+    
+    st.sidebar.markdown("---")
+    
+    # Sentinel-2 Parameters
+    if show_sentinel:
+        st.sidebar.subheader("🛰️ Sentinel-2 Parameters")
+        
+        buffer_km = st.sidebar.slider(
+            "Coverage Radius (km)",
+            min_value=10,
+            max_value=50,
+            value=30,
+            step=5,
+            help="Radius around the location"
+        )
+        
+        days_back = st.sidebar.slider(
+            "Days to Look Back",
+            min_value=7,
+            max_value=30,
+            value=25,
+            step=1,
+            help="Search window for imagery"
+        )
+        
+        max_cloud = st.sidebar.slider(
+            "Max Cloud Coverage (%)",
+            min_value=10,
+            max_value=50,
+            value=30,
+            step=5
+        )
+        
+        resolution = st.sidebar.select_slider(
+            "Resolution (m/pixel)",
+            options=[10, 20, 40, 60],
+            value=40,
+            help="Lower = more detail, slower"
+        )
+        
+        st.sidebar.markdown("**Vegetation Alert Thresholds**")
+        ndvi_min = st.sidebar.number_input("NDVI Min", 0.0, 1.0, 0.3, 0.05)
+        ndmi_min = st.sidebar.number_input("NDMI Min", -1.0, 1.0, 0.1, 0.05)
+        cloud_max_threshold = st.sidebar.number_input("Cloud Alert (%)", 10, 100, 30, 5)
+        
+        sentinel_thresholds = {
+            'ndvi_min': ndvi_min,
+            'ndmi_min': ndmi_min,
+            'cloud_max': cloud_max_threshold
+        }
+        st.sidebar.markdown("---")
+    else:
+        buffer_km, days_back, max_cloud, resolution, sentinel_thresholds = None, None, None, None, None
+    
+    # ERA5 Parameters
+    if show_era5:
+        st.sidebar.subheader("🌡️ ERA5-Land Parameters")
+        
+        start_date = st.sidebar.date_input(
+            "Start Date",
+            value=datetime(2024, 1, 1),
+            help="Beginning of climate data period"
+        )
+        end_date = st.sidebar.date_input(
+            "End Date",
+            value=datetime.now(),
+            help="End of climate data period"
+        )
+        
+        st.sidebar.markdown("**Climate Alert Thresholds**")
+        max_temp_c = st.sidebar.number_input("Max Temp (°C)", -50, 60, 35, 1)
+        min_temp_c = st.sidebar.number_input("Min Temp (°C)", -50, 60, -10, 1)
+        total_precip_mm = st.sidebar.number_input("Max Precip (mm)", 0, 2000, 500, 50)
+        min_precip_mm = st.sidebar.number_input("Min Precip (mm)", 0, 1000, 100, 10)
+        min_soil_moisture = st.sidebar.number_input("Min Soil Moisture", 0.0, 1.0, 0.20, 0.05)
+        
+        era5_thresholds = {
+            'max_temp_c': max_temp_c,
+            'min_temp_c': min_temp_c,
+            'total_precip_mm': total_precip_mm,
+            'min_precip_mm': min_precip_mm,
+            'min_soil_moisture': min_soil_moisture
+        }
+    else:
+        start_date, end_date, era5_thresholds = None, None, None
+    
+    # Main interface
+    st.markdown("### 📍 Enter Location")
+    
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        address = st.text_input(
+            "Location Address",
+            placeholder="e.g., Prineville, Oregon or 123 Farm Road, Iowa City, IA",
+            help="Enter any address or location name"
+        )
+    
+    with col2:
+        st.write("")
+        st.write("")
+        analyze_button = st.button("🚀 Analyze", type="primary", use_container_width=True)
+    
+    # Process analysis
+    if analyze_button:
+        if not address:
+            st.error("❌ Please enter a location address")
+            return
+        
+        # Validate credentials
+        if show_sentinel and (not client_id or not client_secret):
+            st.error("❌ Please provide Copernicus OAuth credentials in the sidebar")
+            return
+        
+        if show_era5 and not cds_key:
+            st.error("❌ Please provide CDS API Key in the sidebar")
+            return
+        
+        # Store results
+        sentinel_results = None
+        era5_results = None
+        geocoded_lat, geocoded_lon = None, None
+        
+        # Process Sentinel-2
+        if show_sentinel:
+            with st.spinner("🛰️ Processing Sentinel-2 data... (2-5 minutes)"):
+                try:
+                    sentinel_results = process_sentinel_data(
+                        address=address,
+                        client_id=client_id,
+                        client_secret=client_secret,
+                        buffer_km=buffer_km,
+                        days_back=days_back,
+                        max_cloud=max_cloud,
+                        resolution=resolution,
+                        thresholds=sentinel_thresholds
+                    )
+                    
+                    if sentinel_results:
+                        st.success("✅ Sentinel-2 analysis complete!")
+                        geocoded_lat = sentinel_results['location']['latitude']
+                        geocoded_lon = sentinel_results['location']['longitude']
+                        
+                except Exception as e:
+                    st.error(f"❌ Sentinel-2 Error: {str(e)}")
+                    st.exception(e)
+        
+        # Process ERA5
+        if show_era5:
+            # Get coordinates (from Sentinel if available, otherwise geocode)
+            if geocoded_lat is None:
+                from geopy.geocoders import Nominatim
+                st.info("🗺️ Geocoding address...")
+                try:
+                    geolocator = Nominatim(user_agent="allsat_ai_era5")
+                    location = geolocator.geocode(address, timeout=10)
+                    if location:
+                        geocoded_lat = location.latitude
+                        geocoded_lon = location.longitude
+                    else:
+                        st.error("❌ Could not geocode address for ERA5 analysis")
+                        return
+                except Exception as e:
+                    st.error(f"❌ Geocoding error: {str(e)}")
+                    return
+            
+            with st.spinner("🌡️ Processing ERA5-Land data... (2-3 minutes)"):
+                try:
+                    era5_results = process_era5_data(
+                        address=address,
+                        lat=geocoded_lat,
+                        lon=geocoded_lon,
+                        cds_key=cds_key,
+                        start_date=start_date.strftime('%Y-%m-%d'),
+                        end_date=end_date.strftime('%Y-%m-%d'),
+                        thresholds=era5_thresholds
+                    )
+                    
+                    if era5_results:
+                        st.success("✅ ERA5-Land analysis complete!")
+                        
+                except Exception as e:
+                    st.error(f"❌ ERA5 Error: {str(e)}")
+                    st.exception(e)
+        
+        # Display results
+        if sentinel_results or era5_results:
+            st.markdown("---")
+            st.markdown("## 📊 Analysis Results")
+            
+            if sentinel_results and era5_results:
+                # Show both in tabs
+                tab1, tab2 = st.tabs(["🛰️ Sentinel-2 (Vegetation)", "🌡️ ERA5-Land (Climate)"])
+                
+                with tab1:
+                    display_results(sentinel_results)
+                
+                with tab2:
+                    display_era5_results(era5_results)
+            
+            elif sentinel_results:
+                display_results(sentinel_results)
+            
+            elif era5_results:
+                display_era5_results(era5_results)
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; color: #666; padding: 1rem;">
+        <p><strong>ALLSAT AI - Environmental Warning & Intelligence System</strong></p>
+        <p>Sentinel-2 Satellite Imagery + ERA5-Land Climate Data from Copernicus</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()

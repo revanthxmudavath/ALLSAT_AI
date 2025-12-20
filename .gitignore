@@ -1,0 +1,4 @@
+colab_files/
+.streamlit/
+__pycache__/
+venv/
