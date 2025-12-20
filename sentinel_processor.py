@@ -414,3 +414,5 @@ ALERT STATUS
         report += f"{'='*80}\n"
         
         return report
+
+

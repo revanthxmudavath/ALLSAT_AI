@@ -9,6 +9,7 @@ import glob
 import numpy as np
 import rasterio
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 from datetime import datetime, timedelta
 from io import BytesIO
 import tempfile
@@ -79,63 +80,339 @@ st.markdown("""
 
 def visualize_tiff_files(ndvi_path, ndmi_path, nodata=-9999):
     """
-    Visualize NDVI and NDMI .tif files
+    Comprehensive NDVI/NDMI visualization with 7 analysis panels
+    
+    Args:
+        ndvi_path: Path to NDVI GeoTIFF
+        ndmi_path: Path to NDMI GeoTIFF
+        nodata: No-data value to mask
+        
+    Returns:
+        BytesIO: Buffer containing the complete analysis figure
     """
-    # Debug: Check if files exist and are valid
-    import os
-    if not os.path.exists(ndvi_path):
-        raise FileNotFoundError(f"NDVI file not found: {ndvi_path}")
-    if not os.path.exists(ndmi_path):
-        raise FileNotFoundError(f"NDMI file not found: {ndmi_path}")
     
-    # Check file sizes
-    with rasterio.open(ndvi_path) as src:
-        print(f"NDVI dimensions: {src.width} x {src.height}")
-        if src.width == 0 or src.height == 0:
-            raise ValueError(f"Invalid NDVI dimensions: {src.width} x {src.height}")
-    
-    with rasterio.open(ndmi_path) as src:
-        print(f"NDMI dimensions: {src.width} x {src.height}")
-        if src.width == 0 or src.height == 0:
-            raise ValueError(f"Invalid NDMI dimensions: {src.width} x {src.height}")
-    
-    fig, axes = plt.subplots(1, 2, figsize=(15, 8))
-    
-    # NDVI visualization
+    # Load data
     with rasterio.open(ndvi_path) as src:
         ndvi = src.read(1).astype(np.float32)
         ndvi_masked = np.ma.masked_where(ndvi == nodata, ndvi)
-        
-        cmap_ndvi = plt.cm.RdYlGn.copy()
-        cmap_ndvi.set_bad(color='black')
-        
-        im1 = axes[0].imshow(ndvi_masked, cmap=cmap_ndvi, vmin=-0.1, vmax=0.9)
-        axes[0].set_title("NDVI (Vegetation Health)", fontsize=16, fontweight='bold')
-        axes[0].axis('off')
-        plt.colorbar(im1, ax=axes[0], fraction=0.046, pad=0.04, label='NDVI Value')
     
-    # NDMI visualization
     with rasterio.open(ndmi_path) as src:
         ndmi = src.read(1).astype(np.float32)
         ndmi_masked = np.ma.masked_where(ndmi == nodata, ndmi)
-        
-        cmap_ndmi = plt.cm.BrBG.copy()
-        cmap_ndmi.set_bad(color='black')
-        
-        im2 = axes[1].imshow(ndmi_masked, cmap=cmap_ndmi, vmin=-0.4, vmax=0.6)
-        axes[1].set_title("NDMI (Moisture Content)", fontsize=16, fontweight='bold')
-        axes[1].axis('off')
-        plt.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04, label='NDMI Value')
     
-    # Add legend
-    fig.text(0.5, 0.02, "Black = Excluded pixels (clouds/snow/no-data)",
-             ha="center", va="bottom", fontsize=12, style='italic')
+    # Get valid data only (for statistics)
+    ndvi_valid = ndvi_masked.compressed()
+    ndmi_valid = ndmi_masked.compressed()
     
-    plt.tight_layout(rect=[0, 0.04, 1, 1])
+    # Calculate statistics
+    ndvi_stats = {
+        'mean': np.mean(ndvi_valid),
+        'median': np.median(ndvi_valid),
+        'std': np.std(ndvi_valid),
+        'min': np.min(ndvi_valid),
+        'max': np.max(ndvi_valid)
+    }
     
-    # Save to buffer
+    ndmi_stats = {
+        'mean': np.mean(ndmi_valid),
+        'median': np.median(ndmi_valid),
+        'std': np.std(ndmi_valid),
+        'min': np.min(ndmi_valid),
+        'max': np.max(ndmi_valid)
+    }
+    
+    # Calculate correlation (only where both have valid data)
+    valid_mask = ~ndvi_masked.mask & ~ndmi_masked.mask
+    ndvi_for_corr = ndvi[valid_mask]
+    ndmi_for_corr = ndmi[valid_mask]
+    correlation = np.corrcoef(ndvi_for_corr, ndmi_for_corr)[0, 1]
+    
+    # Calculate coverage
+    total_pixels = ndvi.size
+    valid_pixels = len(ndvi_valid)
+    coverage_pct = (valid_pixels / total_pixels) * 100
+    
+    # =========================================================================
+    # CREATE FIGURE WITH 7 PANELS
+    # =========================================================================
+    
+    fig = plt.figure(figsize=(20, 12))
+    gs = GridSpec(3, 3, figure=fig, hspace=0.35, wspace=0.3)
+    
+    # Title
+    fig.suptitle(
+        'NDVI vs NDMI Analysis',
+        fontsize=18,
+        fontweight='bold',
+        y=0.98
+    )
+    
+    # -------------------------------------------------------------------------
+    # PANEL 1: NDVI Map (Top Left)
+    # -------------------------------------------------------------------------
+    ax1 = fig.add_subplot(gs[0, 0])
+    
+    cmap_ndvi = plt.cm.RdYlGn.copy()
+    cmap_ndvi.set_bad(color='white', alpha=0.3)
+    
+    im1 = ax1.imshow(ndvi_masked, cmap=cmap_ndvi, vmin=-0.2, vmax=0.8)
+    ax1.set_title('NDVI (Vegetation Health)', fontsize=12, fontweight='bold')
+    ax1.axis('off')
+    
+    cbar1 = plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
+    cbar1.set_label('NDVI', fontsize=10)
+    
+    # -------------------------------------------------------------------------
+    # PANEL 2: NDMI Map (Top Center-Left)
+    # -------------------------------------------------------------------------
+    ax2 = fig.add_subplot(gs[0, 1])
+    
+    cmap_ndmi = plt.cm.BrBG.copy()
+    cmap_ndmi.set_bad(color='white', alpha=0.3)
+    
+    im2 = ax2.imshow(ndmi_masked, cmap=cmap_ndmi, vmin=-0.4, vmax=0.6)
+    ax2.set_title('NDMI (Moisture Content)', fontsize=12, fontweight='bold')
+    ax2.axis('off')
+    
+    cbar2 = plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
+    cbar2.set_label('NDMI', fontsize=10)
+    
+    # -------------------------------------------------------------------------
+    # PANEL 3: Difference Map (NDVI - NDMI) (Top Center-Right)
+    # -------------------------------------------------------------------------
+    ax3 = fig.add_subplot(gs[0, 2])
+    
+    difference = ndvi_masked - ndmi_masked
+    
+    im3 = ax3.imshow(difference, cmap='RdBu_r', vmin=-0.2, vmax=0.8)
+    ax3.set_title('Difference (NDVI - NDMI)', fontsize=12, fontweight='bold')
+    ax3.axis('off')
+    
+    cbar3 = plt.colorbar(im3, ax=ax3, fraction=0.046, pad=0.04)
+    cbar3.set_label('NDVI - NDMI', fontsize=10)
+    
+    # -------------------------------------------------------------------------
+    # PANEL 4: Distribution Comparison (Top Right)
+    # -------------------------------------------------------------------------
+    ax4 = fig.add_subplot(gs[1, 0])
+    
+    ax4.hist(
+        ndvi_valid,
+        bins=50,
+        alpha=0.6,
+        color='green',
+        label='NDVI',
+        density=True,
+        edgecolor='darkgreen'
+    )
+    ax4.hist(
+        ndmi_valid,
+        bins=50,
+        alpha=0.6,
+        color='blue',
+        label='NDMI',
+        density=True,
+        edgecolor='darkblue'
+    )
+    
+    ax4.set_xlabel('Index Value', fontsize=10)
+    ax4.set_ylabel('Density', fontsize=10)
+    ax4.set_title('Distribution Comparison', fontsize=12, fontweight='bold')
+    ax4.legend(loc='upper left')
+    ax4.grid(True, alpha=0.3)
+    ax4.set_xlim(-1, 1)
+    
+    # -------------------------------------------------------------------------
+    # PANEL 5: NDVI vs NDMI Scatter Plot 
+    # -------------------------------------------------------------------------
+    ax5 = fig.add_subplot(gs[1, 1:3])
+    
+    # Downsample if too many points (for performance)
+    if len(ndvi_for_corr) > 50000:
+        sample_idx = np.random.choice(len(ndvi_for_corr), 50000, replace=False)
+        ndvi_sample = ndvi_for_corr[sample_idx]
+        ndmi_sample = ndmi_for_corr[sample_idx]
+    else:
+        ndvi_sample = ndvi_for_corr
+        ndmi_sample = ndmi_for_corr
+    
+    scatter = ax5.scatter(
+        ndmi_sample,
+        ndvi_sample,
+        c=ndvi_sample,
+        cmap='RdYlGn',
+        s=1,
+        alpha=0.5,
+        vmin=-0.2,
+        vmax=0.8
+    )
+    
+    ax5.plot([-1, 1], [-1, 1], 'r--', linewidth=1.5, alpha=0.5, label='1:1 line')
+    
+    ax5.text(
+        0.05,
+        0.95,
+        f'r = {correlation:.3f}',
+        transform=ax5.transAxes,
+        fontsize=12,
+        fontweight='bold',
+        verticalalignment='top',
+        bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    )
+    
+    ax5.set_xlabel('NDMI', fontsize=11, fontweight='bold')
+    ax5.set_ylabel('NDVI', fontsize=11, fontweight='bold')
+    ax5.set_title('NDVI vs NDMI Scatter', fontsize=12, fontweight='bold')
+    ax5.grid(True, alpha=0.3)
+    ax5.set_xlim(-1, 1)
+    ax5.set_ylim(-1, 1)
+    ax5.legend(loc='lower right')
+    
+    plt.colorbar(scatter, ax=ax5, label='NDVI Value')
+    
+    # -------------------------------------------------------------------------
+    # PANEL 6: Statistical Comparison (Middle Center-Right)
+    # -------------------------------------------------------------------------
+    ax6 = fig.add_subplot(gs[2, 0])
+    
+    bp = ax6.boxplot(
+        [ndvi_valid, ndmi_valid],
+        tick_labels=['NDVI', 'NDMI'],
+        patch_artist=True,
+        showmeans=True,
+        meanline=True
+    )
+    
+    bp['boxes'][0].set_facecolor('lightgreen')
+    bp['boxes'][1].set_facecolor('lightblue')
+    
+    ax6.set_ylabel('Index Value', fontsize=10, fontweight='bold')
+    ax6.set_title('Statistical Comparison', fontsize=12, fontweight='bold')
+    ax6.grid(True, alpha=0.3, axis='y')
+    ax6.set_ylim(-1, 1)
+    
+    # -------------------------------------------------------------------------
+    # PANEL 7: Valid Data Coverage Map (Middle Right)
+    # -------------------------------------------------------------------------
+    ax7 = fig.add_subplot(gs[2, 1])
+    
+    coverage_mask = (~ndvi_masked.mask).astype(int)
+    
+    im7 = ax7.imshow(coverage_mask, cmap='RdYlGn', vmin=0, vmax=1)
+    ax7.set_title('Valid Data Coverage', fontsize=12, fontweight='bold')
+    ax7.axis('off')
+    
+    ax7.text(
+        0.5,
+        -0.1,
+        f'{coverage_pct:.1f}% valid',
+        transform=ax7.transAxes,
+        fontsize=11,
+        fontweight='bold',
+        ha='center',
+        bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.7)
+    )
+    
+    # -------------------------------------------------------------------------
+    # PANEL 8: NDVI Statistics Table (Bottom Left)
+    # -------------------------------------------------------------------------
+    ax8 = fig.add_subplot(gs[2, 2])
+    ax8.axis('off')
+    
+    ndvi_table_data = [
+        ['Metric', 'Value'],
+        ['Mean', f'{ndvi_stats["mean"]:.4f}'],
+        ['Median', f'{ndvi_stats["median"]:.4f}'],
+        ['Std Dev', f'{ndvi_stats["std"]:.4f}'],
+        ['Min', f'{ndvi_stats["min"]:.4f}'],
+        ['Max', f'{ndvi_stats["max"]:.4f}'],
+        ['Range', f'[{ndvi_stats["min"]:.1f}, {ndvi_stats["max"]:.1f}]']
+    ]
+    
+    table1 = ax8.table(
+        cellText=ndvi_table_data,
+        loc='center',
+        cellLoc='left',
+        colWidths=[0.3, 0.3],
+        bbox=[0.0, 0.0, 0.45, 1.0]
+    )
+    
+    table1.auto_set_font_size(False)
+    table1.set_fontsize(10)
+    table1.scale(1, 2)
+    
+    for i in range(2):
+        table1[(0, i)].set_facecolor('#4CAF50')
+        table1[(0, i)].set_text_props(weight='bold', color='white')
+    
+    for i in range(1, len(ndvi_table_data)):
+        for j in range(2):
+            if i % 2 == 0:
+                table1[(i, j)].set_facecolor('#f0f0f0')
+    
+    ax8.text(
+        0.225,
+        1.05,
+        'NDVI STATISTICS',
+        transform=ax8.transAxes,
+        fontsize=12,
+        fontweight='bold',
+        ha='center',
+        bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.7)
+    )
+    
+    ndmi_table_data = [
+        ['Metric', 'Value'],
+        ['Mean', f'{ndmi_stats["mean"]:.4f}'],
+        ['Median', f'{ndmi_stats["median"]:.4f}'],
+        ['Std Dev', f'{ndmi_stats["std"]:.4f}'],
+        ['Min', f'{ndmi_stats["min"]:.4f}'],
+        ['Max', f'{ndmi_stats["max"]:.4f}'],
+        ['Range', f'[{ndmi_stats["min"]:.1f}, {ndmi_stats["max"]:.1f}]']
+    ]
+    
+    table2 = ax8.table(
+        cellText=ndmi_table_data,
+        loc='center',
+        cellLoc='left',
+        colWidths=[0.3, 0.3],
+        bbox=[0.55, 0.0, 0.45, 1.0]
+    )
+    
+    table2.auto_set_font_size(False)
+    table2.set_fontsize(10)
+    table2.scale(1, 2)
+    
+    for i in range(2):
+        table2[(0, i)].set_facecolor('#2196F3')
+        table2[(0, i)].set_text_props(weight='bold', color='white')
+    
+    for i in range(1, len(ndmi_table_data)):
+        for j in range(2):
+            if i % 2 == 0:
+                table2[(i, j)].set_facecolor('#f0f0f0')
+    
+    ax8.text(
+        0.775,
+        1.05,
+        'NDMI STATISTICS',
+        transform=ax8.transAxes,
+        fontsize=12,
+        fontweight='bold',
+        ha='center',
+        bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7)
+    )
+    
+       
     buf = BytesIO()
-    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig(
+        buf,
+        format='png',
+        dpi=150,
+        bbox_inches='tight',
+        facecolor='white',
+        edgecolor='none'
+    )
     buf.seek(0)
     plt.close()
     
@@ -307,7 +584,7 @@ def process_era5_data(address, lat, lon, cds_key, start_date, end_date, threshol
         # Process data and check alerts
         st.info("📊 Analyzing climate data...")
         data, alerts = manager.process_era5_for_alerts(
-            netcdf_path, lat, lon, thresholds, max_distance_km=50, verbose=True
+            netcdf_path, lat, lon, thresholds, max_distance_km=50, verbose=True, start_date=start_date, end_date=end_date
         )
         
         # Generate report
@@ -408,11 +685,14 @@ def display_results(results):
     
     # Data Quality
     st.markdown("## 📊 Data Quality")
+    valid_pixels = stats['valid_pixels']
+    total_pixels = stats['total_pixels']
+    valid_pct = (valid_pixels / total_pixels * 100) if total_pixels else 0.0
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Cloud Coverage", f"{stats['cloud_percentage']:.1f}%")
     with col2:
-        st.metric("Valid Pixels", f"{stats['valid_pixels']:,} / {stats['total_pixels']:,}")
+        st.metric("Valid Pixels", f"{valid_pixels:,} / {total_pixels:,} ({valid_pct:.1f}%)")
     
     st.markdown("---")
     
@@ -441,7 +721,7 @@ def display_results(results):
     # Visualizations
     st.markdown("## 🗺️ Satellite Imagery Analysis")
     
-    st.info("Generating visualizations from satellite data...")
+    st.info("Generating detailed NDVI/NDMI analysis panels...")
     
     try:
         img_buffer = visualize_tiff_files(
@@ -477,7 +757,7 @@ def display_era5_results(results):
         st.metric("Latitude", f"{results['location']['latitude']:.4f}°N")
     with col2:
         st.metric("Longitude", f"{results['location']['longitude']:.4f}°W")
-        st.metric("Data Distance", f"{results['data']['distance_km']:.1f} km")
+        st.metric("Data Distance (Grid Mismatch)", f"{results['data']['distance_km']:.1f} km")
     
     st.markdown("---")
     st.markdown("## 🌡️ Climate Metrics")
@@ -543,10 +823,10 @@ def display_era5_results(results):
             
             st.markdown(f"""
             <div class="{severity_class}">
-                <h4>[{i}] [{alert['severity']}] {alert['type']}</h4>
-                <p><strong>Message:</strong> {alert['message']}</p>
-                <p><strong>Value:</strong> {alert['value']:.2f} | <strong>Threshold:</strong> {alert['threshold']:.2f}</p>
-                <p>💡 <em>{alert.get('recommendation', 'Monitor the situation closely.')}</em></p>
+                <h4 style="color: #000; margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']}] {alert['type']}</h4>
+                <p style="color: #333; margin: 0.25rem 0;"><strong>Message:</strong> {alert['message']}</p>
+                <p style="color: #333; margin: 0.25rem 0;"><strong>Value:</strong> {alert['value']:.3f} | <strong>Threshold:</strong> {alert['threshold']:.3f}</p>
+                <p style="color: #555; margin: 0.25rem 0;">💡 <em>{alert.get('recommendation', 'Monitor the situation closely.')}</em></p>
             </div>
             """, unsafe_allow_html=True)
     else:
@@ -690,7 +970,7 @@ def main():
         
         start_date = st.sidebar.date_input(
             "Start Date",
-            value=datetime(2024, 1, 1),
+            value=datetime(2025, 10, 1),
             help="Beginning of climate data period"
         )
         end_date = st.sidebar.date_input(
