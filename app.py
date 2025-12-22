@@ -873,7 +873,7 @@ def main():
     st.sidebar.subheader("Analysis Type")
     analysis_type = st.sidebar.radio(
         "Select Analysis",
-        ["🛰️ Sentinel-2 (Vegetation)", "🌡️ ERA5-Land (Climate)", "📊 Both"],
+        ["🛰️ Vegetation (Sentinel-2)", "🌡️ ERA5-Land (Climate)", "📊 Both"],
         help="Choose which analysis to run"
     )
     
@@ -882,7 +882,7 @@ def main():
     # API Credentials
     st.sidebar.subheader("API Credentials")
     
-    show_sentinel = analysis_type in ["🛰️ Sentinel-2 (Vegetation)", "📊 Both"]
+    show_sentinel = analysis_type in ["🛰️ Vegetation (Sentinel-2)", "📊 Both"]
     show_era5 = analysis_type in ["🌡️ ERA5-Land (Climate)", "📊 Both"]
     
     if show_sentinel:
@@ -1102,7 +1102,7 @@ def main():
             
             if sentinel_results and era5_results:
                 # Show both in tabs
-                tab1, tab2 = st.tabs(["🛰️ Sentinel-2 (Vegetation)", "🌡️ ERA5-Land (Climate)"])
+                tab1, tab2 = st.tabs(["🛰️ Vegetation (Sentinel-2)", "🌡️ ERA5-Land (Climate)"])
                 
                 with tab1:
                     display_results(sentinel_results)
