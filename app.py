@@ -915,7 +915,7 @@ def main():
     
     # Sentinel-2 Parameters
     if show_sentinel:
-        st.sidebar.subheader("🛰️ Sentinel-2 Parameters")
+        st.sidebar.subheader("Sentinel-2 Parameters")
         
         buffer_km = st.sidebar.slider(
             "Coverage Radius (km)",
@@ -966,7 +966,7 @@ def main():
     
     # ERA5 Parameters
     if show_era5:
-        st.sidebar.subheader("🌡️ ERA5-Land Parameters")
+        st.sidebar.subheader("ERA5-Land Parameters")
         
         start_date = st.sidebar.date_input(
             "Start Date",
