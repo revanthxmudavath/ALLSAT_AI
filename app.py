@@ -4,8 +4,6 @@ Streamlit Prototype for Sentinel-2 Vegetation Monitoring & ERA5-Land Climate Ana
 """
 
 import streamlit as st
-import os
-import glob
 import numpy as np
 import rasterio
 import matplotlib.pyplot as plt

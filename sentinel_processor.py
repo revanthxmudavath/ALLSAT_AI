@@ -8,8 +8,6 @@ import math
 import numpy as np
 import rasterio
 from datetime import datetime
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
 from rasterio.transform import from_bounds
 from sentinelhub import (
     SHConfig, 
