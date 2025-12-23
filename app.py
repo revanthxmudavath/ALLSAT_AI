@@ -13,6 +13,7 @@ from matplotlib.gridspec import GridSpec
 from datetime import datetime, timedelta
 from io import BytesIO
 import tempfile
+from geocoding import geocode_with_fallback 
 
 # Import custom modules
 from sentinel_processor import (
@@ -1061,20 +1062,12 @@ def main():
         if show_era5:
             # Get coordinates (from Sentinel if available, otherwise geocode)
             if geocoded_lat is None:
-                from geopy.geocoders import Nominatim
-                st.info("🗺️ Geocoding address...")
-                try:
-                    geolocator = Nominatim(user_agent="allsat_ai_era5")
-                    location = geolocator.geocode(address, timeout=10)
-                    if location:
-                        geocoded_lat = location.latitude
-                        geocoded_lon = location.longitude
-                    else:
-                        st.error("❌ Could not geocode address for ERA5 analysis")
-                        return
-                except Exception as e:
-                    st.error(f"❌ Geocoding error: {str(e)}")
-                    return
+                st.info("🗺️ Geocoding address.")
+            try:
+                geocoded_lat, geocoded_lon, _ = geocode_with_fallback(address, timeout=10)
+            except Exception as e:
+                st.error(f"❌ Geocoding error: {str(e)}")
+                return
             
             with st.spinner("🌡️ Processing ERA5-Land data... (2-3 minutes)"):
                 try:

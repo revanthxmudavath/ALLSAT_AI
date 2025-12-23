@@ -22,6 +22,8 @@ from sentinelhub import (
     MimeType,
 )
 
+from geocoding import geocode_with_fallback
+
 
 def setup_cdse_config(client_id, client_secret, profile_name="cdse"):
     """Setup and save configuration for Copernicus Data Space Ecosystem"""
@@ -58,18 +60,9 @@ class SentinelDataManager:
         """Convert address to coordinates"""
         print(f"\n{'='*80}\nGEOCODING ADDRESS\n{'='*80}")
         print(f"Input: {address}")
-        try:
-            geolocator = Nominatim(user_agent="allsat_ai_sentinel")
-            location = geolocator.geocode(address, timeout=10)
-            if location is None:
-                raise ValueError(f"Could not geocode address: {address}")
-            lat, lon = location.latitude, location.longitude
-            print(f"✅ Found location:\n   Coordinates: {lat:.4f}°N, {lon:.4f}°W\n   Address: {location.address}\n{'='*80}\n")
-            return lat, lon, location.address
-        except GeocoderTimedOut:
-            raise TimeoutError("Geocoding service timed out. Please try again.")
-        except Exception as e:
-            raise ValueError(f"Geocoding failed: {str(e)}")
+        lat, lon, formatted = geocode_with_fallback(address, timeout=10)
+        print(f"✅ Found location:\n   Coordinates: {lat:.4f}°N, {lon:.4f}°W\n   Address: {formatted}\n{'='*80}\n")
+        return lat, lon, formatted
 
     def create_bbox_from_point(self, lat, lon, buffer_km=20):
         """Create bounding box around a point"""
