@@ -34,8 +34,19 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-arcgis_api_key = st.secrets.get("ARC_GIS_API_KEY", "")
-locationiq_api_key = st.secrets.get("LOCATIONIQ_API_KEY", "")
+try:
+    arcgis_api_key = st.secrets["ARC_GIS_API_KEY"]
+    
+except KeyError:
+    arcgis_api_key = None
+    print("⚠️ ArcGIS key not found in secrets")
+
+try:
+    locationiq_api_key = st.secrets["LOCATIONIQ_API_KEY"]
+    
+except KeyError:
+    locationiq_api_key = None
+    print("⚠️ LocationIQ key not found in secrets")
 
 # Custom CSS for better UI
 st.markdown("""
