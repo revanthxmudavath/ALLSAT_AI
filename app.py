@@ -565,8 +565,6 @@ def process_era5_data(address, lat, lon, cds_key, start_date, end_date, threshol
     
     # Fetch data
     st.info(f"📡 Fetching ERA5-Land climate data from CDS API...")
-    st.warning("⏳ This may take 2-3 minutes depending on CDS queue. Please be patient.")
-    
     variables = [
         '2m_temperature',
         'total_precipitation',
