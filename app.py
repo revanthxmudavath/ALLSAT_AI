@@ -34,6 +34,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+arcgis_api_key = st.secrets.get("ARC_GIS_API_KEY", "")
+locationiq_api_key = st.secrets.get("LOCATIONIQ_API_KEY", "")
+
 # Custom CSS for better UI
 st.markdown("""
     <style>
@@ -485,7 +488,7 @@ def process_sentinel_data(address, client_id, client_secret, buffer_km, days_bac
         config = setup_cdse_config(client_id, client_secret, "cdse")
     
     # Initialize manager
-    manager = SentinelDataManager(config)
+    manager = SentinelDataManager(config, arcgis_api_key=arcgis_api_key, locationiq_api_key=locationiq_api_key)
     
     # Geocode address
     st.info(f"🗺️ Geocoding address: {address}")
@@ -1060,7 +1063,7 @@ def main():
             if geocoded_lat is None:
                 st.info("🗺️ Geocoding address.")
             try:
-                geocoded_lat, geocoded_lon, _ = geocode_with_fallback(address, timeout=10)
+                geocoded_lat, geocoded_lon, _ = geocode_with_fallback(address, timeout=10, arcgis_api_key=arcgis_api_key, locationiq_api_key=locationiq_api_key)
             except Exception as e:
                 st.error(f"❌ Geocoding error: {str(e)}")
                 return

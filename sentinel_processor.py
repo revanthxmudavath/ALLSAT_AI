@@ -46,8 +46,10 @@ def load_cdse_config(profile_name="cdse"):
 class SentinelDataManager:
     """Manage Sentinel-2 data search, download, and processing"""
     
-    def __init__(self, config):
+    def __init__(self, config, arcgis_api_key=None, locationiq_api_key=None):
         self.config = config
+        self.arcgis_api_key = arcgis_api_key
+        self.locationiq_api_key = locationiq_api_key
         if "dataspace.copernicus.eu" not in config.sh_base_url:
             raise ValueError(f"Wrong base URL: {config.sh_base_url}")
         print(f"🔧 SentinelDataManager initialized")
@@ -58,7 +60,7 @@ class SentinelDataManager:
         """Convert address to coordinates"""
         print(f"\n{'='*80}\nGEOCODING ADDRESS\n{'='*80}")
         print(f"Input: {address}")
-        lat, lon, formatted = geocode_with_fallback(address, timeout=10)
+        lat, lon, formatted = geocode_with_fallback(address, timeout=10, arcgis_api_key=self.arcgis_api_key, locationiq_api_key=self.locationiq_api_key)
         print(f"✅ Found location:\n   Coordinates: {lat:.4f}°N, {lon:.4f}°W\n   Address: {formatted}\n{'='*80}\n")
         return lat, lon, formatted
 
