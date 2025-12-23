@@ -73,20 +73,20 @@ class ERA5DataManager:
         area = [lat + buffer, lon - buffer, lat - buffer, lon + buffer]
         
         # Parse years and months from date range
-        start_year = int(start_date[:4])
-        end_year = int(end_date[:4])
-        year = [start_date[:4]]
+        start_dt = pd.to_datetime(start_date)
+        end_dt = pd.to_datetime(end_date)
+        years = [str(y) for y in range(start_dt.year, end_dt.year + 1)]
+        months = [f"{m:02d}" for m in range(1, 13)]
         
         request = {
             'variable': variables,
-            'year': year,
-            'month': ['01', '02', '03', '04', '05', '06',
-                      '07', '08', '09', '10', '11', '12'],
+            'year': years,
+            'month': months,
             'area': area,
             'format': 'netcdf',
         }
         
-        download_file = os.path.join(output_dir, f'era5_data_{lat}_{lon}.nc')
+        download_file = os.path.join(output_dir, f'era5_data_{lat}_{lon}.zip')
         
         print(f"\n📡 Downloading data from CDS API...")
         print(f"⏳ This may take 5-15 minutes depending on queue...")
@@ -111,14 +111,16 @@ class ERA5DataManager:
             
             nc_path = os.path.join(extract_dir, found_files[0])
             ds = xr.open_dataset(nc_path, engine='netcdf4')
+            final_path = nc_path
         else:
             # It's likely a direct NetCDF file
             ds = xr.open_dataset(download_file, engine='netcdf4')
-        
+            final_path = download_file
+
         print(f"✅ Data downloaded successfully")
         print(f"{'='*80}\n")
         
-        return ds, download_file
+        return ds, final_path
     
     def validate_coordinates(self, ds, client_lat, client_lon, max_distance_km=50):
         """
@@ -192,7 +194,7 @@ class ERA5DataManager:
         
         return True, actual_lat, actual_lon, distance
     
-    def process_era5_for_alerts(self, netcdf_path, client_lat, client_lon, thresholds, max_distance_km=50, verbose=True):
+    def process_era5_for_alerts(self, netcdf_path, client_lat, client_lon, thresholds, max_distance_km=50, verbose=True, start_date=None, end_date=None):
         """
         Process ERA5 data and check for threshold violations
         
@@ -207,8 +209,19 @@ class ERA5DataManager:
         Returns:
             tuple: (data dict, alerts list)
         """
+        if zipfile.is_zipfile(netcdf_path):
+            raise ValueError(f"Expected .nc, got ZIP: {netcdf_path}")
+        
+        with open(netcdf_path, "rb") as f:
+            magic = f.read(4)
+        
+        if not (magic.startswith(b"CDF") or magic == b"\x89HDF"): 
+            raise ValueError(f"File is not NetCDF/HDF5. Magic={magic!r}. Path={netcdf_path}")
+
         # Open dataset
         ds = xr.open_dataset(netcdf_path, engine='netcdf4')
+        if start_date and end_date: 
+            ds = ds.sel(valid_time=slice(pd.to_datetime(start_date), pd.to_datetime(end_date)))
         
         # Validate coordinates
         if verbose:

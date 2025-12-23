@@ -8,8 +8,6 @@ import math
 import numpy as np
 import rasterio
 from datetime import datetime
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
 from rasterio.transform import from_bounds
 from sentinelhub import (
     SHConfig, 
@@ -21,6 +19,8 @@ from sentinelhub import (
     CRS, 
     MimeType,
 )
+
+from geocoding import geocode_with_fallback
 
 
 def setup_cdse_config(client_id, client_secret, profile_name="cdse"):
@@ -58,18 +58,9 @@ class SentinelDataManager:
         """Convert address to coordinates"""
         print(f"\n{'='*80}\nGEOCODING ADDRESS\n{'='*80}")
         print(f"Input: {address}")
-        try:
-            geolocator = Nominatim(user_agent="allsat_ai_sentinel")
-            location = geolocator.geocode(address, timeout=10)
-            if location is None:
-                raise ValueError(f"Could not geocode address: {address}")
-            lat, lon = location.latitude, location.longitude
-            print(f"✅ Found location:\n   Coordinates: {lat:.4f}°N, {lon:.4f}°W\n   Address: {location.address}\n{'='*80}\n")
-            return lat, lon, location.address
-        except GeocoderTimedOut:
-            raise TimeoutError("Geocoding service timed out. Please try again.")
-        except Exception as e:
-            raise ValueError(f"Geocoding failed: {str(e)}")
+        lat, lon, formatted = geocode_with_fallback(address, timeout=10)
+        print(f"✅ Found location:\n   Coordinates: {lat:.4f}°N, {lon:.4f}°W\n   Address: {formatted}\n{'='*80}\n")
+        return lat, lon, formatted
 
     def create_bbox_from_point(self, lat, lon, buffer_km=20):
         """Create bounding box around a point"""
@@ -414,3 +405,5 @@ ALERT STATUS
         report += f"{'='*80}\n"
         
         return report
+
+
