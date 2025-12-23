@@ -89,7 +89,7 @@ class ERA5DataManager:
         download_file = os.path.join(output_dir, f'era5_data_{lat}_{lon}.zip')
         
         print(f"\n📡 Downloading data from CDS API...")
-        print(f"⏳ This may take 2-3 minutes depending on queue...")
+        
         
         self.client.retrieve(
             'reanalysis-era5-land-monthly-means',
