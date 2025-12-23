@@ -19,7 +19,6 @@ from sentinelhub import (
     CRS, 
     MimeType,
 )
-
 from geocoding import geocode_with_fallback
 
 
