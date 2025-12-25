@@ -11,7 +11,7 @@ from matplotlib.gridspec import GridSpec
 from datetime import datetime, timedelta
 from io import BytesIO
 import tempfile
-from geocoding import geocode_with_fallback 
+from geocoding import geocode_with_fallback
 
 # Import custom modules
 from sentinel_processor import (
@@ -25,6 +25,15 @@ from era5_processor import (
     ClimateAlertSystem,
     CoordinateError
 )
+
+from risk_integration import (
+    generate_risk_maps_from_data,
+    format_risk_report,
+    get_risk_alert_level,
+    interpret_risk_level
+)
+
+from pathlib import Path 
 
 # Page config
 st.set_page_config(
@@ -578,7 +587,7 @@ def process_era5_data(address, lat, lon, cds_key, start_date, end_date, threshol
     manager = ERA5DataManager(cds_key)
     
     # Fetch data
-    st.info(f"📡 Fetching ERA5-Land climate data from CDS API...")
+    
     variables = [
         '2m_temperature',
         'total_precipitation',
@@ -868,6 +877,113 @@ def display_era5_results(results):
         mime="text/plain"
     )
 
+def display_risk_assessment(risk_results: dict, address: str, lat: float, lon: float):
+    """
+    Display combined risk assessment with scores and visualization
+    """
+    from risk_integration import interpret_risk_level, get_risk_alert_level, format_risk_report
+    
+    stats = risk_results['statistics']
+    
+    # Get risk levels
+    drought_mean = stats['drought']['mean']
+    wildfire_mean = stats['wildfire']['mean']
+    
+    drought_label, drought_color, drought_rec = interpret_risk_level(drought_mean)
+    wildfire_label, wildfire_color, wildfire_rec = interpret_risk_level(wildfire_mean)
+    
+    alert_info = get_risk_alert_level(stats)
+    
+    # Display Alert Banner
+    if alert_info['severity'] == "CRITICAL":
+        st.error(f"{alert_info['icon']} **{alert_info['severity']}**: {alert_info['message']}")
+    elif alert_info['severity'] == "WARNING":
+        st.warning(f"{alert_info['icon']} **{alert_info['severity']}**: {alert_info['message']}")
+    else:
+        st.success(f"{alert_info['icon']} **{alert_info['severity']}**: {alert_info['message']}")
+    
+    # Risk Scores Side by Side
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("### 🌾 Drought Risk")
+        st.markdown(f"""
+        <div style="
+            background-color: {drought_color}22; 
+            border-left: 5px solid {drought_color}; 
+            padding: 20px; 
+            border-radius: 5px;
+            margin: 10px 0;
+        ">
+            <h1 style="color: {drought_color}; margin: 0;">{drought_mean:.2f}</h1>
+            <h3 style="margin: 5px 0;">{drought_label} Risk</h3>
+            <p style="margin: 5px 0; font-size: 0.9em;">{drought_rec}</p>
+            <hr style="border-color: {drought_color};">
+            <p style="margin: 5px 0;"><strong>Range:</strong> {stats['drought']['min']:.2f} - {stats['drought']['max']:.2f}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Distribution
+        with st.expander("📊 Risk Distribution"):
+            for class_name, class_stats in stats['drought']['classes'].items():
+                st.metric(
+                    label=class_name,
+                    value=f"{class_stats['percentage']:.1f}%",
+                    delta=f"{class_stats['count']:,} pixels"
+                )
+    
+    with col2:
+        st.markdown("### 🔥 Wildfire Risk")
+        st.markdown(f"""
+        <div style="
+            background-color: {wildfire_color}22; 
+            border-left: 5px solid {wildfire_color}; 
+            padding: 20px; 
+            border-radius: 5px;
+            margin: 10px 0;
+        ">
+            <h1 style="color: {wildfire_color}; margin: 0;">{wildfire_mean:.2f}</h1>
+            <h3 style="margin: 5px 0;">{wildfire_label} Risk</h3>
+            <p style="margin: 5px 0; font-size: 0.9em;">{wildfire_rec}</p>
+            <hr style="border-color: {wildfire_color};">
+            <p style="margin: 5px 0;"><strong>Range:</strong> {stats['wildfire']['min']:.2f} - {stats['wildfire']['max']:.2f}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Distribution
+        with st.expander("📊 Risk Distribution"):
+            for class_name, class_stats in stats['wildfire']['classes'].items():
+                st.metric(
+                    label=class_name,
+                    value=f"{class_stats['percentage']:.1f}%",
+                    delta=f"{class_stats['count']:,} pixels"
+                )
+    
+    # Visualization
+    st.markdown("### 🗺️ Risk Maps")
+    st.image(
+        risk_results['visualization'],
+        caption=f"Combined Risk Assessment - {address}",
+        width='stretch'
+    )
+    
+    # Download Report
+    st.markdown("### 📥 Download Full Report")
+    
+    location_info = {
+        'address': address,
+        'latitude': lat,
+        'longitude': lon
+    }
+    
+    report_text = format_risk_report(risk_results, location_info)
+    
+    st.download_button(
+        label="📄 Download Risk Assessment Report",
+        data=report_text,
+        file_name=f"risk_assessment_{address.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.txt",
+        mime="text/plain"
+    )
 
 def main():
     """Main Streamlit application"""
@@ -1022,7 +1138,7 @@ def main():
     with col2:
         st.write("")
         st.write("")
-        analyze_button = st.button("🚀 Analyze", type="primary", use_container_width=True)
+        analyze_button = st.button("🚀 Analyze", type="primary", width='stretch')
     
     # Process analysis
     if analyze_button:
@@ -1079,6 +1195,7 @@ def main():
                 st.error(f"❌ Geocoding error: {str(e)}")
                 return
             
+            st.info(f"📡 Fetching ERA5-Land climate data from CDS API...")
             with st.spinner("🌡️ Processing ERA5-Land data... (2-3 minutes)"):
                 try:
                     era5_results = process_era5_data(
@@ -1105,13 +1222,34 @@ def main():
             
             if sentinel_results and era5_results:
                 # Show both in tabs
-                tab1, tab2 = st.tabs(["Vegetation (Sentinel-2)", "Climate (ERA5-Land)"])
+                tab1, tab2, tab3 = st.tabs(["Vegetation (Sentinel-2)", "Climate (ERA5-Land)", "Combined Drought and Wildfire Risk Scores"])
                 
                 with tab1:
                     display_results(sentinel_results)
                 
                 with tab2:
                     display_era5_results(era5_results)
+                
+                with tab3:
+                    st.markdown(" Combined Risk Assessment")
+    
+                    with st.spinner(" Generating drought and wildfire risk maps..."):
+                        try:
+                            risk_results = generate_risk_maps_from_data(
+                                ndvi_path=sentinel_results['files']['ndvi'],
+                                ndmi_path=sentinel_results['files']['ndmi'],
+                                era5_nc_path=era5_results['netcdf_path'],
+                                output_dir=None  # Uses temp directory
+                            )
+                            
+                            # Display Risk Scores
+                            display_risk_assessment(risk_results, address, geocoded_lat, geocoded_lon)
+                            
+                        except Exception as e:
+                            st.error(f"❌ Risk Assessment Error: {str(e)}")
+                            st.exception(e)
+
+                
             
             elif sentinel_results:
                 display_results(sentinel_results)
