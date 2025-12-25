@@ -8,3 +8,5 @@ cdsapi>=0.6.1
 xarray>=2023.1.0
 netCDF4>=1.6.0
 pandas>=2.0.0
+scipy>=1.10.0
+geopandas>=1.1.0
