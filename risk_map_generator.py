@@ -589,7 +589,6 @@ def create_risk_visualization(
                     markersize=10,
                     markeredgecolor="black",
                     markerfacecolor="cyan",
-                    subtitle="",
                     alpha=0.9,
                 )
                 axes[0].plot(col, row, **marker_kwargs)  # Drought map
