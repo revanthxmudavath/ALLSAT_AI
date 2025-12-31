@@ -1239,7 +1239,10 @@ def main():
                                 ndvi_path=sentinel_results['files']['ndvi'],
                                 ndmi_path=sentinel_results['files']['ndmi'],
                                 era5_nc_path=era5_results['netcdf_path'],
-                                output_dir=None  # Uses temp directory
+                                output_dir=None,  # Uses temp directory
+                                thresholds=None,  # or pass your thresholds dict if you have one
+                                lat=geocoded_lat,
+                                lon=geocoded_lon,
                             )
                             
                             # Display Risk Scores

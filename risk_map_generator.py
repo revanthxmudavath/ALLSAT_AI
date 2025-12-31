@@ -11,6 +11,7 @@ from rasterio.warp import reproject, Resampling
 from rasterio.transform import from_bounds, array_bounds
 import geopandas as gpd
 from rasterio.features import geometry_mask
+from rasterio.transform import from_bounds, array_bounds, rowcol
 
 warnings.filterwarnings("ignore")
 
@@ -208,6 +209,8 @@ class RiskMapGenerator:
             "wildfire_risk_data": wildfire_risk,
             "statistics": stats,
             "coverage_percent": coverage_pct,
+            "transform": ndvi_profile["transform"],
+            "crs": ndvi_profile["crs"],
         }
 
     # -----------------------------
@@ -541,6 +544,9 @@ class RiskMapGenerator:
 def create_risk_visualization(
     drought_risk_data: np.ndarray,
     wildfire_risk_data: np.ndarray,
+    transform=None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
     nodata: float = -9999.0,
 ) -> "BytesIO":
     import matplotlib.pyplot as plt
@@ -569,6 +575,28 @@ def create_risk_visualization(
     axes[1].set_title("Wildfire Risk Map", fontsize=14, fontweight="bold", pad=15)
     axes[1].axis("off")
     plt.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
+
+    if transform is not None and lat is not None and lon is not None:
+       
+        try:
+            # row, col in raster coordinates
+            row, col = rowcol(transform, float(lon), float(lat))
+
+            h, w = drought_masked.shape
+            if 0 <= row < h and 0 <= col < w:
+                marker_kwargs = dict(
+                    marker="o",
+                    markersize=10,
+                    markeredgecolor="black",
+                    markerfacecolor="cyan",
+                    subtitle="",
+                    alpha=0.9,
+                )
+                axes[0].plot(col, row, **marker_kwargs)  # Drought map
+                axes[1].plot(col, row, **marker_kwargs)  # Wildfire map
+        except Exception:
+            
+            pass
 
     plt.tight_layout()
     buf = BytesIO()

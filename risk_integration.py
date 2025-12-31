@@ -14,7 +14,9 @@ def generate_risk_maps_from_data(
     ndmi_path: str,
     era5_nc_path: str,
     output_dir: Optional[str] = None,
-    thresholds: Optional[dict] = None
+    thresholds: Optional[dict] = None,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
 ) -> Dict:
     """
        
@@ -63,7 +65,11 @@ def generate_risk_maps_from_data(
     # Create visualization
     viz_buffer = create_risk_visualization(
         drought_risk_data=results['drought_risk_data'],
-        wildfire_risk_data=results['wildfire_risk_data']
+        wildfire_risk_data=results['wildfire_risk_data'],
+        transform=results.get("transform"),
+        lat=lat,
+        lon=lon,
+        nodata=generator.nodata,
     )
     
     results['visualization'] = viz_buffer
