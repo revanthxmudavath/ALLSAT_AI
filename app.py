@@ -1771,7 +1771,7 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.markdown("### About This Demo")
     st.sidebar.info("""
-    This demo showcases ALLSAT AI's environmental monitoring capabilities using pre-computed data for 5 locations.
+    This demo showcases ALLSAT AI's environmental monitoring capabilities using simulated and publicly available data for 5 locations.
     
     **Data Sources:**
     - Sentinel-2 L2A (Last 30 days)
