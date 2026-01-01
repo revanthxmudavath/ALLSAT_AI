@@ -852,7 +852,7 @@ RISK_DATA = {
         'coverage_percent': 99.1,
         
         'images': {
-            'risk': 'nashville/risk.png',
+            'risk': 'nashville/combined.png',
         }
     }
 }
