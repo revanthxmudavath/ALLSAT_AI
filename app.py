@@ -1840,7 +1840,7 @@ def main():
     st.markdown("""
     <div style="text-align: center; color: #666; padding: 1rem;">
         <p><strong>ALLSAT AI - Environmental Warning & Intelligence System</strong></p>
-        <p>Sentinel-2 Satellite Imagery + ERA5-Land Climate Data from Copernicus</p>
+        <p>Sentinel-2 Satellite Imagery + ERA5-Land Climate Data </p>
     </div>
     """, unsafe_allow_html=True)
 
