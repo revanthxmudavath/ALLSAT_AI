@@ -1321,6 +1321,21 @@ st.markdown("""
         color: #666;
         margin-bottom: 2rem;
     }
+    .demo-tag-wrap {
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    .demo-tag {
+        display: inline-block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #4a5568;
+        background: #f4f6f8;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 0.2rem 0.7rem;
+        letter-spacing: 0.02em;
+    }
     .metric-card {
         background-color: #f0f2f6;
         padding: 1rem;
@@ -1753,6 +1768,10 @@ def display_risk_assessment(location_key):
 
 def main():
     # Header
+    st.markdown(
+        '<div class="demo-tag-wrap"><span class="demo-tag">Pre-generated Demonstration Prototype</span></div>',
+        unsafe_allow_html=True
+    )
     st.markdown('<h1 class="main-header">🛰️ ALLSAT AI - EWIS</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Environmental Warning & Intelligence System - Demo</p>', unsafe_allow_html=True)
     
