@@ -97,15 +97,15 @@ VEGETATION_DATA = {
         'alerts': [
             {
                 'severity': 'CRITICAL',
-                'title': 'MOISTURE STRESS - LOW NDMI',
-                'message': 'Average NDMI of -0.015 indicates moisture stress (threshold: 0.100)',
-                'recommendation': 'Plants are experiencing water stress. Consider irrigation or check soil moisture.'
+                'title': 'MOISTURE STRESS - (NDMI SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated NDMI value of -0.015 compared against an example threshold (0.100) to illustrate how moisture stress may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             },
             {
                 'severity': 'MEDIUM',
-                'title': 'DATA QUALITY - HIGH CLOUD COVERAGE',
-                'message': 'Cloud coverage of 31.5% exceeds threshold of 30%',
-                'recommendation': 'Data quality may be affected. Consider using data from a different date.'
+                'title': 'DATA QUALITY - (CLOUD SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated cloud coverage of 31.5% compared against a threshold (20%) to illustrate how data quality issues may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             }
         ],
         
@@ -240,15 +240,15 @@ VEGETATION_DATA = {
         'alerts': [
             {
                 'severity': 'HIGH',
-                'title': 'VEGETATION HEALTH - LOW NDVI',
-                'message': 'Average NDVI of 0.261 indicates poor vegetation health (threshold: 0.300)',
-                'recommendation': 'Vegetation density is below normal. Check for crop stress, disease, or soil issues.'
+                'title': 'VEGETATION HEALTH - (NDVI SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated NDVI value of 0.261 compared against an example threshold (0.300) to illustrate how vegetation health may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             },
             {
                 'severity': 'CRITICAL',
-                'title': 'MOISTURE STRESS - LOW NDMI',
-                'message': 'Average NDMI of -0.098 indicates moisture stress (threshold: 0.100)',
-                'recommendation': 'Plants are experiencing water stress. Consider irrigation or check soil moisture.'
+                'title': 'MOISTURE STRESS - (NDMI SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated NDMI value of -0.098 compared against an example threshold (0.100) to illustrate how moisture stress may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             }
         ],
         
@@ -296,9 +296,9 @@ VEGETATION_DATA = {
         'alerts': [
             {
                 'severity': 'CRITICAL',
-                'title': 'MOISTURE STRESS - LOW NDMI',
-                'message': 'Average NDMI of -0.055 indicates moisture stress (threshold: 0.100)',
-                'recommendation': 'Plants are experiencing water stress. Consider irrigation or check soil moisture.'
+                'title': 'MOISTURE STRESS - (NDMI SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated NDMI value of -0.055 compared against an example threshold (0.100) to illustrate how moisture stress may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             }
         ],
         
@@ -345,15 +345,15 @@ CLIMATE_DATA = {
         'alerts': [
             {
                 'severity': 'HIGH',
-                'title': 'PRECIPITATION - DROUGHT RISK',
-                'message': 'Total precipitation of 1.2mm below threshold of 100mm',
-                'recommendation': 'Low precipitation detected. Drought risk - consider irrigation.'
+                'title': 'PRECIPITATION - (DROUGHT SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated precipitation value of 1.2mm compared against an example threshold (100mm) to illustrate how drought risk may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             },
             {
                 'severity': 'MEDIUM',
-                'title': 'SOIL MOISTURE - DRY CONDITIONS',
-                'message': 'Soil moisture of 0.194 below threshold of 0.200',
-                'recommendation': 'Dry soil conditions detected. Plants may be experiencing water stress.'
+                'title': 'SOIL MOISTURE - (DRY SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated soil moisture value of 0.194 compared against an example threshold (0.200) to illustrate how dry soil conditions may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             }
         ],
         
@@ -402,9 +402,9 @@ CLIMATE_DATA = {
         'alerts': [
             {
                 'severity': 'HIGH',
-                'title': 'PRECIPITATION - DROUGHT RISK',
-                'message': 'Total precipitation of 1.2mm below threshold of 100mm',
-                'recommendation': 'Low precipitation detected. Drought risk - consider irrigation.'
+                'title': 'PRECIPITATION - (DROUGHT SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated precipitation value of 1.2mm compared against an example threshold (100mm) to illustrate how drought risk may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             }
         ],
         
@@ -452,9 +452,9 @@ CLIMATE_DATA = {
         'alerts': [
             {
                 'severity': 'HIGH',
-                'title': 'PRECIPITATION - DROUGHT RISK',
-                'message': 'Total precipitation of 4.3mm below threshold of 100mm',
-                'recommendation': 'Low precipitation detected. Drought risk - consider irrigation.'
+                'title': 'PRECIPITATION - (DROUGHT SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated precipitation value of 4.3mm compared against an example threshold (100mm) to illustrate how drought risk may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             }
         ],
         
@@ -502,9 +502,9 @@ CLIMATE_DATA = {
         'alerts': [
             {
                 'severity': 'HIGH',
-                'title': 'PRECIPITATION - DROUGHT RISK',
-                'message': 'Total precipitation of 3.1mm below threshold of 100mm',
-                'recommendation': 'Low precipitation detected. Drought risk - consider irrigation.'
+                'title': 'PRECIPITATION - (DROUGHT SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated precipitation value of 3.1mm compared against an example threshold (100mm) to illustrate how drought risk may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             }
         ],
         
@@ -552,9 +552,9 @@ CLIMATE_DATA = {
         'alerts': [
             {
                 'severity': 'HIGH',
-                'title': 'PRECIPITATION - DROUGHT RISK',
-                'message': 'Total precipitation of 3.1mm below threshold of 100mm',
-                'recommendation': 'Low precipitation detected. Drought risk - consider irrigation.'
+                'title': 'PRECIPITATION - (DROUGHT SCENARIO)',
+                'message': 'This demonstration scenario displays a pre-generated precipitation value of 3.1mm compared against an example threshold (100mm) to illustrate how drought risk may be presented in EWIS outputs.',
+                'recommendation': 'Pre-generated demonstration scenario. No live analysis occurs.'
             }
         ],
         
@@ -584,7 +584,7 @@ RISK_DATA = {
             'min_score': 0.25,
             'max_score': 0.86,
             'risk_level': 'Moderate',
-            'risk_color': "#ffd52f",  # Yellow
+            'risk_color': "#f1c40f",  # Yellow
             'class_distribution': {
                 'low': 22.9,  # % of pixels
                 'moderate': 63.0,
@@ -595,7 +595,7 @@ RISK_DATA = {
                 'moderate': 566667,
                 'high': 127336
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated drought risk level of Moderate Risk value 0.51 compared against threshold range of 0.25 - 0.86 to illustrate how drought risk may be presented in EWIS outputs.'
         },
         
         # Wildfire risk
@@ -604,7 +604,7 @@ RISK_DATA = {
             'min_score': 0.25,
             'max_score': 0.46,
             'risk_level': 'Moderate',
-            'risk_color': "#ffd52f",  # Yellow
+            'risk_color': "#f1c40f",  # Yellow
             'class_distribution': {
                 'low': 14.4,
                 'moderate': 85.6,
@@ -615,14 +615,14 @@ RISK_DATA = {
                 'moderate': 770817,
                 'high': 0
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated wildfire risk level of Moderate Risk value 0.43 compared against threshold range of 0.25 - 0.46 to illustrate how wildfire risk may be presented in EWIS outputs.'
         },
         
         # Overall alert
         'overall_alert': {
             'severity': 'WARNING',
             'icon': '🟡',
-            'message': 'Moderate risk conditions detected. Increased monitoring advised.'
+            'message': 'Moderate risk conditions displayed.'
         },
         
         # Coverage
@@ -652,7 +652,7 @@ RISK_DATA = {
                 'moderate': 449828,
                 'high': 81477
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated drought risk level of Moderate Risk value 0.39 compared against threshold range of 0.23 - 0.86 to illustrate how drought risk may be presented in EWIS outputs.'
         },
         
         # Wildfire risk
@@ -672,14 +672,14 @@ RISK_DATA = {
                 'moderate': 622400,
                 'high': 0
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated wildfire risk level of Moderate Risk value 0.35 compared against threshold range of 0.23 - 0.46 to illustrate how wildfire risk may be presented in EWIS outputs.'
         },
         
         # Overall alert
         'overall_alert': {
             'severity': 'WARNING',
             'icon': '🟡',
-            'message': 'Moderate risk conditions detected. Increased monitoring advised.'
+            'message': 'Moderate risk conditions displayed.'
         },
         
         # Coverage
@@ -708,7 +708,7 @@ RISK_DATA = {
                 'moderate': 354437,
                 'high': 91430
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated drought risk level of Moderate Risk value 0.36 compared against threshold range of 0.23 - 0.86 to illustrate how drought risk may be presented in EWIS outputs.'
         },
         
         # Wildfire risk
@@ -728,14 +728,14 @@ RISK_DATA = {
                 'moderate': 541397,
                 'high': 0
             },
-            'recommendation': 'Conditions are favorable. Continue standard monitoring.'
+            'recommendation': 'This demonstration scenario displays a pre-generated wildfire risk level of Low Risk value 0.33 compared against threshold range of 0.23 - 0.46 to illustrate how wildfire risk may be presented in EWIS outputs.'
         },
         
         # Overall alert
         'overall_alert': {
             'severity': 'WARNING',
             'icon': '🟡',
-            'message': 'Moderate risk conditions detected. Increased monitoring advised.'
+            'message': 'Moderate risk conditions displayed.'
         },
         
         # Coverage
@@ -763,7 +763,7 @@ RISK_DATA = {
                 'moderate': 929568,
                 'high': 473845
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated drought risk level of Moderate Risk value 0.62 compared against threshold range of 0.28 - 0.89 to illustrate how drought risk may be presented in EWIS outputs.'
         },
         
         # Wildfire risk
@@ -783,14 +783,14 @@ RISK_DATA = {
                 'moderate': 1416233,
                 'high': 0
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated wildfire risk level of Moderate Risk value 0.47 compared against threshold range of 0.28 - 0.49 to illustrate how wildfire risk may be presented in EWIS outputs.'
         },
         
         # Overall alert
         'overall_alert': {
             'severity': 'WARNING',
             'icon': '🟡',
-            'message': 'Moderate risk conditions detected. Increased monitoring advised.'
+            'message': 'Moderate risk conditions displayed.'
         },
         
         # Coverage
@@ -818,7 +818,7 @@ RISK_DATA = {
                 'moderate': 1022925,
                 'high': 133488
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated drought risk level of Moderate Risk value 0.52 compared against threshold range of 0.26 - 0.87 to illustrate how drought risk may be presented in EWIS outputs.'
         },
         
         # Wildfire risk
@@ -838,14 +838,14 @@ RISK_DATA = {
                 'moderate': 1250766,
                 'high': 0
             },
-            'recommendation': 'Increased monitoring recommended. Prepare mitigation strategies.'
+            'recommendation': 'This demonstration scenario displays a pre-generated wildfire risk level of Low Risk value 0.33 compared against threshold range of 0.23 - 0.46 to illustrate how wildfire risk may be presented in EWIS outputs.'
         },
         
         # Overall alert
         'overall_alert': {
             'severity': 'WARNING',
             'icon': '🟡',
-            'message': 'Moderate risk conditions detected. Increased monitoring advised.'
+            'message': 'Moderate risk conditions displayed.'
         },
         
         # Coverage

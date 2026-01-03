@@ -1410,7 +1410,7 @@ def display_vegetation_analysis(location_key):
         st.metric("Std Dev", f"{metrics['ndvi']['std']:.3f}")
     
     # NDVI interpretation
-    with st.expander("📖 NDVI Interpretation Guide"):
+    with st.expander("📖 Example NDVI Interpretation Guide"):
         st.markdown("""
         - **< 0.2**: Bare soil, rocks, water
         - **0.2 - 0.3**: Sparse vegetation
@@ -1436,7 +1436,7 @@ def display_vegetation_analysis(location_key):
         st.metric("Std Dev", f"{metrics['ndmi']['std']:.3f}")
     
     # NDMI interpretation
-    with st.expander("📖 NDMI Interpretation Guide"):
+    with st.expander("📖 Example NDMI Interpretation Guide"):
         st.markdown("""
         - **< 0.0**: Severe drought stress ⚠️
         - **0.0 - 0.2**: Moderate stress
@@ -1460,28 +1460,29 @@ def display_vegetation_analysis(location_key):
     st.markdown("---")
     
     # Alerts
-    st.markdown("## ⚠️ Alert Status")
+    st.markdown("## ⚠️ Pre-generated Demonstration Alert Status")
+    st.warning("**NOTE:** Severity labels shown are pre-generated examples for demonstration purposes only.")
     
     if veg_data['alerts']:
-        st.warning(f"**{len(veg_data['alerts'])} Alert(s) Detected**")
+        pass
         
         for i, alert in enumerate(veg_data['alerts'], 1):
             severity_class = f"alert-{alert['severity'].lower()}"
             
             st.markdown(f"""
             <div class="{severity_class}" style="color: #333;">
-                <h4 style="color: #000; margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']}] {alert['title']}</h4>
+                <h4 style="color: #000; margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']} (EXAMPLE)] {alert['title']}</h4>
                 <p style="color: #333; margin: 0.25rem 0;"><strong>Message:</strong> {alert['message']}</p>
                 <p style="color: #555; margin: 0.25rem 0;">💡 <em>{alert['recommendation']}</em></p>
             </div>
             """, unsafe_allow_html=True)
     else:
-        st.success("✅ **No Alerts** - All parameters within normal range")
+        st.success("✅ **No Pre-generated Demonstration Alerts**")
     
     st.markdown("---")
     
     # Visualizations
-    st.markdown("## 🗺️ Satellite Imagery Analysis")
+    st.markdown("## 🗺️ Exmaple Satellite Imagery Analysis")
     
     # Display the sentinel image
     if 'sentinel' in veg_data['images']:
@@ -1581,28 +1582,30 @@ def display_climate_analysis(location_key):
     st.markdown("---")
     
     # Alerts
-    st.markdown("## ⚠️ Alert Status")
+    st.markdown("## ⚠️ Pre-generated Demonstration Alert Status")
+    
     
     if climate_data['alerts']:
-        st.warning(f"**{len(climate_data['alerts'])} Alert(s) Detected**")
+        st.warning("**NOTE:** Severity labels shown are pre-generated examples for demonstration purposes only.")
+    
         
         for i, alert in enumerate(climate_data['alerts'], 1):
             severity_class = f"alert-{alert['severity'].lower()}"
             
             st.markdown(f"""
             <div class="{severity_class}" style="color: #333;">
-                <h4 style="color: #000; margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']}] {alert['title']}</h4>
+                <h4 style="color: #000; margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']} (EXAMPLE)] {alert['title']}</h4>
                 <p style="color: #333; margin: 0.25rem 0;"><strong>Message:</strong> {alert['message']}</p>
                 <p style="color: #555; margin: 0.25rem 0;">💡 <em>{alert['recommendation']}</em></p>
             </div>
             """, unsafe_allow_html=True)
     else:
-        st.success("✅ **No Alerts** - All parameters within normal range")
+        st.success("✅ **No Pre-generated Demonstration Alerts**")
     
     st.markdown("---")
     
     # Visualizations
-    st.markdown("## 📈 Climate Analysis Charts")
+    st.markdown("## 📈 Example Climate Analysis Charts")
     
     # Display the combined analysis image
     if 'combined_analysis' in climate_data['images']:
@@ -1639,12 +1642,14 @@ def display_risk_assessment(location_key):
     
     # Overall Alert Banner
     alert = risk_data['overall_alert']
+    st.markdown("⚠️ Pre-generated Demonstration Overall Risk Alert")
+    st.warning("**NOTE:** Severity labels shown are pre-generated examples for demonstration purposes only.")
     if alert['severity'] == 'CRITICAL':
-        st.error(f"{alert['icon']} **{alert['severity']}**: {alert['message']}")
+        st.error(f"{alert['icon']} **{alert['severity']}**: {alert['message']} (EXAMPLE)")
     elif alert['severity'] == 'WARNING':
-        st.warning(f"{alert['icon']} **{alert['severity']}**: {alert['message']}")
+        st.warning(f"{alert['icon']} **{alert['severity']}**: {alert['message']} (EXAMPLE)")
     else:
-        st.success(f"{alert['icon']} **{alert['severity']}**: {alert['message']}")
+        st.success(f"{alert['icon']} **{alert['severity']}**: {alert['message']} (EXAMPLE)")
     
     st.markdown("---")
     
@@ -1654,20 +1659,20 @@ def display_risk_assessment(location_key):
     # Drought Risk
     with col1:
         drought = risk_data['drought_risk']
-        st.markdown(f"## 🌾 Drought Risk")
+        st.markdown(f"## 🌾 Example Drought Risk")
         
         st.markdown(f"""
         <div style="background-color: {drought['risk_color']}22; padding: 2rem; border-radius: 0.5rem; border-left: 4px solid {drought['risk_color']};">
             <h1 style="margin: 0; color: #000;">{drought['mean_score']:.2f}</h1>
-            <h3 style="margin: 0.5rem 0; color: #000;">{drought['risk_level']} Risk</h3>
+            <h3 style="margin: 0.5rem 0; color: #000;">{drought['risk_level']} Risk (SCENARIO)</h3>
             <p style="color: #FFF; margin: 1rem 0;">{drought['recommendation']}</p>
             <hr style="border-color: {drought['risk_color']};">
-            <p style="color: #FFF; margin: 0.5rem 0;"><strong>Range:</strong> {drought['min_score']:.2f} - {drought['max_score']:.2f}</p>
+            <p style="color: #FFF; margin: 0.5rem 0;"><strong>Pre-generated demonstration scenario. No live analysis occurs.</p>
         </div>
         """, unsafe_allow_html=True)
         
         # Risk Distribution
-        with st.expander("📊 Risk Distribution"):
+        with st.expander("📊 Example Risk Distribution"):
             dist = drought['class_distribution']
             pixels = drought['class_pixels']
             st.markdown(f"""
@@ -1687,20 +1692,20 @@ def display_risk_assessment(location_key):
     # Wildfire Risk
     with col2:
         wildfire = risk_data['wildfire_risk']
-        st.markdown(f"## 🔥 Wildfire Risk")
+        st.markdown(f"## 🔥 Example Wildfire Risk")
         
         st.markdown(f"""
         <div style="background-color: {wildfire['risk_color']}22; padding: 2rem; border-radius: 0.5rem; border-left: 4px solid {wildfire['risk_color']};">
             <h1 style="margin: 0; color: #000;">{wildfire['mean_score']:.2f}</h1>
-            <h3 style="margin: 0.5rem 0; color: #000;">{wildfire['risk_level']} Risk</h3>
+            <h3 style="margin: 0.5rem 0; color: #000;">{wildfire['risk_level']} Risk (SCENARIO)</h3>
             <p style="color: #FFF; margin: 1rem 0;">{wildfire['recommendation']}</p>
             <hr style="border-color: {wildfire['risk_color']};">
-            <p style="color: #FFF; margin: 0.5rem 0;"><strong>Range:</strong> {wildfire['min_score']:.2f} - {wildfire['max_score']:.2f}</p>
+            <p style="color: #FFF; margin: 0.5rem 0;"><strong>Pre-generated demonstration scenario. No live analysis occurs.</p>
         </div>
         """, unsafe_allow_html=True)
         
         # Risk Distribution
-        with st.expander("📊 Risk Distribution"):
+        with st.expander("📊 Example Risk Distribution"):
             dist = wildfire['class_distribution']
             pixels = wildfire['class_pixels']
             st.markdown(f"""
@@ -1720,7 +1725,7 @@ def display_risk_assessment(location_key):
     st.markdown("---")
     
     # Risk Maps Visualization
-    st.markdown("## 🗺️ Risk Maps")
+    st.markdown("## 🗺️ Example Risk Maps")
     
     if 'combined_visualization' in risk_data['images']:
         image_path = Path("demo") / risk_data['images']['combined_visualization']
@@ -1744,27 +1749,6 @@ def display_risk_assessment(location_key):
                 st.warning(f"⚠️ Visualization not available. Looking for: {image_path} or {alt_path}")
     else:
         st.warning("⚠️ No risk visualizations available for this location")
-    
-    st.markdown("---")
-    
-    # Methodology
-    with st.expander("📖 Risk Assessment Methodology"):
-        st.markdown("""
-        ### Drought Risk Formula
-        35% Moisture Stress (NDMI) + 25% Vegetation Stress (NDVI) + 20% Precipitation Deficit + 20% Heat Stress
-        
-        ### Wildfire Risk Formula
-        40% Moisture Stress (NDMI) + 20% Heat Stress + 20% Precipitation Deficit + 20% Critical Fuel Condition (NDMI < 0.10)
-        
-        ### Risk Scale
-        - **0.00-0.33**: Low Risk (favorable conditions)
-        - **0.33-0.66**: Moderate Risk (monitor closely)
-        - **0.66-1.00**: High Risk (action required)
-        
-        ### Data Sources
-        - Sentinel-2 L2A: Vegetation indices (NDVI, NDMI)
-        - ERA5-Land: Temperature, precipitation, soil moisture
-        """)
 
 def main():
     # Header
