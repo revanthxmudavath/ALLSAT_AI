@@ -1834,14 +1834,17 @@ def display_risk_assessment(location_key):
 
 def main():
     # Header
+    
+    if "theme" not in st.session_state:
+        st.session_state.theme = "dark"
 
     top_left, top_right = st.columns([0.82, 0.18])
 
     with top_right:
-        is_light = (st.session_state.theme == "light")
-        label = "☀️ Light" if is_light else "🌑 Dark"
-        light_on = st.toggle(label, value=is_light)
+        light_on = st.toggle("☀️ / 🌑 Theme", value=(st.session_state.theme == "light"))
         st.session_state.theme = "light" if light_on else "dark"
+
+
     apply_theme(st.session_state.theme)
 
     st.markdown(
