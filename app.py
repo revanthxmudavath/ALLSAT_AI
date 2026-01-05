@@ -964,7 +964,7 @@
 #     st.image(
 #         risk_results['visualization'],
 #         caption=f"Combined Risk Assessment - {address}",
-#         use_container_width=True
+#         width='stretch'
 #     )
     
 #     # Download Report
@@ -1138,7 +1138,7 @@
 #     with col2:
 #         st.write("")
 #         st.write("")
-#         analyze_button = st.button("🚀 Analyze", type="primary", use_container_width=True)
+#         analyze_button = st.button("🚀 Analyze", type="primary", width='stretch')
     
 #     # Process analysis
 #     if analyze_button:
@@ -1547,12 +1547,12 @@ def display_vegetation_analysis(location_key):
         image_path = Path("demo") / veg_data['images']['sentinel']
         
         if image_path.exists():
-            st.image(str(image_path), use_container_width=True)
+            st.image(str(image_path), width='stretch')
         else:
             # Try alternate location at root level
             alt_path = Path(veg_data['images']['sentinel'])
             if alt_path.exists():
-                st.image(str(alt_path), use_container_width=True)
+                st.image(str(alt_path), width='stretch')
             else:
                 st.warning(f"⚠️ Visualization not available. Looking for: {image_path} or {alt_path}")
     else:
@@ -1668,21 +1668,21 @@ def display_climate_analysis(location_key):
     if 'combined_analysis' in climate_data['images']:
         image_path = Path("demo") / climate_data['images']['combined_analysis']
         if image_path.exists():
-            st.image(str(image_path), use_container_width=True)
+            st.image(str(image_path), width='stretch')
         else:
             alt_path = Path(climate_data['images']['combined_analysis'])
             if alt_path.exists():
-                st.image(str(alt_path), use_container_width=True)
+                st.image(str(alt_path), width='stretch')
             else:
                 st.warning(f"⚠️ Visualization not available. Looking for: {image_path} or {alt_path}")
     elif 'climate' in climate_data['images']:
         image_path = Path("demo") / climate_data['images']['climate']
         if image_path.exists():
-            st.image(str(image_path), use_container_width=True)
+            st.image(str(image_path), width='stretch')
         else:
             alt_path = Path(climate_data['images']['climate'])
             if alt_path.exists():
-                st.image(str(alt_path), use_container_width=True)
+                st.image(str(alt_path), width='stretch')
             else:
                 st.warning(f"⚠️ Visualization not available. Looking for: {image_path} or {alt_path}")
     else:
@@ -1787,21 +1787,21 @@ def display_risk_assessment(location_key):
     if 'combined_visualization' in risk_data['images']:
         image_path = Path("demo") / risk_data['images']['combined_visualization']
         if image_path.exists():
-            st.image(str(image_path), use_container_width=True)
+            st.image(str(image_path), width='stretch')
         else:
             alt_path = Path(risk_data['images']['combined_visualization'])
             if alt_path.exists():
-                st.image(str(alt_path), use_container_width=True)
+                st.image(str(alt_path), width='stretch')
             else:
                 st.warning(f"⚠️ Visualization not available. Looking for: {image_path} or {alt_path}")
     elif 'risk' in risk_data['images']:
         image_path = Path("demo") / risk_data['images']['risk']
         if image_path.exists():
-            st.image(str(image_path), use_container_width=True)
+            st.image(str(image_path), width='stretch')
         else:
             alt_path = Path(risk_data['images']['risk'])
             if alt_path.exists():
-                st.image(str(alt_path), use_container_width=True)
+                st.image(str(alt_path), width='stretch')
             else:
                 st.warning(f"⚠️ Visualization not available. Looking for: {image_path} or {alt_path}")
     else:
@@ -1852,7 +1852,7 @@ def main():
     
     for i, (loc_key, loc_name) in enumerate(zip(locations, location_names)):
         with cols[i]:
-            if st.button(loc_name, key=f"btn_{loc_key}", use_container_width=True):
+            if st.button(loc_name, key=f"btn_{loc_key}", width='stretch'):
                 selected_location = loc_key
     
     # Display results based on selection
