@@ -1282,6 +1282,7 @@ Static Demo Version - Prineville, Oregon
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 from pathlib import Path
 import sys
 
@@ -1304,6 +1305,17 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+def apply_theme(theme: str):
+    components.html(
+        f"""
+        <script>
+          const theme = "{theme}";
+          document.documentElement.setAttribute("data-theme", theme);
+        </script>
+        """,
+        height=0,
+    )
 
 st.markdown("""
 <style>
@@ -1342,6 +1354,19 @@ html[data-theme="light"], html[data-theme="Light"]{
   --risk-body:#111827;
   --risk-subtle:#374151;
 }
+            
+html[data-theme="light"] [data-testid="stAppViewContainer"]{
+  background: #ffffff;
+}
+
+html[data-theme="light"] [data-testid="stSidebar"]{
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .stApp{
+  color: var(--text-default);
+}
+
 
 .main-header {
   font-size: 2.5rem;
@@ -1809,6 +1834,16 @@ def display_risk_assessment(location_key):
 
 def main():
     # Header
+
+    top_left, top_right = st.columns([0.82, 0.18])
+
+    with top_right:
+        is_light = (st.session_state.theme == "light")
+        label = "☀️ Light" if is_light else "🌑 Dark"
+        light_on = st.toggle(label, value=is_light)
+        st.session_state.theme = "light" if light_on else "dark"
+    apply_theme(st.session_state.theme)
+
     st.markdown(
         '<div class="demo-tag-wrap"><span class="demo-tag">Pre-generated Demonstration Prototype</span></div>',
         unsafe_allow_html=True
