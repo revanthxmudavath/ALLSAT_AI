@@ -2,7 +2,7 @@
 # -----------------------------------------------------------------------------
 # APP STATIC - DEMO
 """
-ALLSAT AI - Environmental Warning & Intelligence System (EWIS)
+ALLSAT AI - Early Warning & Intelligence System (EWIS)
 Static Demo Version - Prineville, Oregon
 """
 
@@ -886,7 +886,7 @@ def main():
 
     st.markdown("<p class='ewis-note'>EWIS outputs are provided for evaluation and demonstration purposes only and are not intended for operational, regulatory, or decision-making use.</p>", unsafe_allow_html=True)
     st.markdown('<h1 class="main-header">🛰️ ALLSAT AI - EWIS</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Environmental Warning & Intelligence System - Demo</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Early Warning & Intelligence System - Demo</p>', unsafe_allow_html=True)
     
     # Sidebar - Analysis Type Selection
     st.sidebar.markdown("## 📊 Analysis Settings")
@@ -903,7 +903,7 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.markdown("### About This Demo")
     st.sidebar.info("""
-    This demo showcases ALLSAT AI's environmental monitoring capabilities using simulated and publicly available data for 5 locations.
+    This demo showcases ALLSAT AI's Early monitoring capabilities using simulated and publicly available data for 5 locations.
     
     **Data Sources:**
     - Sentinel-2 L2A (Last 30 days)
@@ -952,7 +952,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: var(--text-muted); padding: 1rem;">
-        <p><strong>ALLSAT AI - Environmental Warning & Intelligence System</strong></p>
+        <p><strong>ALLSAT AI - Early Warning & Intelligence System</strong></p>
         <p>EWIS outputs are provided for evaluation and demonstration purposes only and are not intended for operational,
         regulatory, or decision-making use.</p>
         <p>Sentinel-2 Satellite Imagery + ERA5-Land Climate Data </p>
