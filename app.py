@@ -1326,30 +1326,22 @@ st.markdown("""
 }
 
 
-@media (prefers-color-scheme: light) {
-  :root{
-    --text-strong: #0f172a;
-    --text-default: #111827;
-    --text-muted: #4b5563;
+html[data-theme="light"], html[data-theme="Light"]{
+  --text-strong:#0f172a;
+  --text-default:#111827;
+  --text-muted:#4b5563;
 
-    --card-bg: #ffffff;
-    --card-border: #e5e7eb;
+  --card-bg:#ffffff;
+  --card-border:#e5e7eb;
 
-    --chip-bg: #f4f6f8;
-    --chip-border: #e2e8f0;
-    --chip-text: #334155;
+  --chip-bg:#f4f6f8;
+  --chip-border:#e2e8f0;
+  --chip-text:#334155;
 
-    --risk-title: #0f172a;
-    --risk-body: #111827;      /* IMPORTANT: light mode uses dark text */
-    --risk-subtle: #374151;
-  }
-
-
-  .stMarkdown, .stText, .stCaption, .stMetric {
-    color: var(--text-default);
-  }
+  --risk-title:#0f172a;
+  --risk-body:#111827;
+  --risk-subtle:#374151;
 }
-
 
 .main-header {
   font-size: 2.5rem;
