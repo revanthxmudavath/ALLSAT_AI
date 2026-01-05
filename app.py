@@ -1305,85 +1305,155 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS (copied from original app.py)
 st.markdown("""
-    <style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f77b4;
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-    .sub-header {
-        font-size: 1.2rem;
-        text-align: center;
-        color: #666;
-        margin-bottom: 2rem;
-    }
-    .ewis-note {
-        
-        margin: 0.75rem auto 1.25rem auto;
-        padding: 0.75rem 1rem;
-        text-align: center;
+<style>
 
-        font-size: 0.95rem;
-        line-height: 1.35;
-        color: #2d3748;
+:root{
+  --text-strong: #ffffff;      /* used only where you opt into vars */
+  --text-default: #e5e7eb;
+  --text-muted: #9ca3af;
 
-        background: #fffaf0;              
-        border: 1px solid #fed7aa;
-          
-        border-radius: 0.75rem;
-                
-    }
-    .demo-tag-wrap {
-        text-align: center;
-        margin-bottom: 0.5rem;
-    }
-    .demo-tag {
-        display: inline-block;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #4a5568;
-        background: #f4f6f8;
-        border: 1px solid #e2e8f0;
-        border-radius: 999px;
-        padding: 0.2rem 0.7rem;
-        letter-spacing: 0.02em;
-    }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin: 0.5rem 0;
-    }
-    .alert-critical {
-        background-color: #ffebee;
-        padding: 1rem;
-        border-left: 4px solid #f44336;
-        margin: 0.5rem 0;
-    }
-    .alert-high {
-        background-color: #fff3e0;
-        padding: 1rem;
-        border-left: 4px solid #ff9800;
-        margin: 0.5rem 0;
-    }
-    .alert-medium {
-        background-color: #e3f2fd;
-        padding: 1rem;
-        border-left: 4px solid #2196f3;
-        margin: 0.5rem 0;
-    }
-    .location-button {
-        width: 100%;
-        padding: 0.75rem;
-        font-size: 1.1rem;
-        font-weight: 500;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+  --card-bg: rgba(255,255,255,0.06);
+  --card-border: rgba(255,255,255,0.12);
+
+  --chip-bg: rgba(255,255,255,0.08);
+  --chip-border: rgba(255,255,255,0.12);
+  --chip-text: #e5e7eb;
+
+  --risk-title: #ffffff;
+  --risk-body: #ffffff;        /* IMPORTANT: dark mode keeps white text */
+  --risk-subtle: rgba(255,255,255,0.85);
+}
+
+
+@media (prefers-color-scheme: light) {
+            
+  div.stButton > button {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;   /* stronger than default */
+    color: #0f172a;
+    border-radius: 10px;
+    padding: 0.55rem 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+    transition: all 120ms ease;
+  }
+
+  div.stButton > button:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+  }
+
+  div.stButton > button:focus {
+    outline: 2px solid rgba(31, 119, 180, 0.25);
+    outline-offset: 2px;
+  }
+  :root{
+    --text-strong: #0f172a;
+    --text-default: #111827;
+    --text-muted: #4b5563;
+
+    --card-bg: #ffffff;
+    --card-border: #e5e7eb;
+
+    --chip-bg: #f4f6f8;
+    --chip-border: #e2e8f0;
+    --chip-text: #334155;
+
+    --risk-title: #0f172a;
+    --risk-body: #111827;      /* IMPORTANT: light mode uses dark text */
+    --risk-subtle: #374151;
+  }
+
+
+  .stMarkdown, .stText, .stCaption, .stMetric {
+    color: var(--text-default);
+  }
+}
+
+
+.main-header {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1f77b4;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.sub-header {
+  font-size: 1.2rem;
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.ewis-note {
+  margin: 0.75rem auto 1.25rem auto;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: #2d3748;
+  background: #fffaf0;
+  border: 1px solid #fed7aa;
+  border-radius: 0.75rem;
+}
+
+.demo-tag-wrap {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+.demo-tag {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  color: var(--chip-text);
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  letter-spacing: 0.02em;
+}
+
+
+.metric-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.alert-critical {
+  background-color: #ffebee;
+  padding: 1rem;
+  border-left: 4px solid #f44336;
+  margin: 0.5rem 0;
+}
+.alert-high {
+  background-color: #fff3e0;
+  padding: 1rem;
+  border-left: 4px solid #ff9800;
+  margin: 0.5rem 0;
+}
+.alert-medium {
+  background-color: #e3f2fd;
+  padding: 1rem;
+  border-left: 4px solid #2196f3;
+  margin: 0.5rem 0;
+}
+
+/* Risk card text helpers */
+.risk-title { color: var(--risk-title); margin: 0; }
+.risk-level { color: var(--risk-title); margin: 0.5rem 0; }
+.risk-body  { color: var(--risk-body);  margin: 1rem 0; }
+.risk-subtle{ color: var(--risk-subtle); margin: 0.5rem 0; }
+
+</style>
+""", unsafe_allow_html=True)
+
 
 def display_vegetation_analysis(location_key):
     """Display vegetation analysis results"""
@@ -1679,11 +1749,11 @@ def display_risk_assessment(location_key):
         
         st.markdown(f"""
         <div style="background-color: {drought['risk_color']}22; padding: 2rem; border-radius: 0.5rem; border-left: 4px solid {drought['risk_color']};">
-            <h1 style="margin: 0; color: #000;">{drought['mean_score']:.2f}</h1>
-            <h3 style="margin: 0.5rem 0; color: #000;">{drought['risk_level']} Risk (SCENARIO)</h3>
-            <p style="color: #FFF; margin: 1rem 0;">{drought['recommendation']}</p>
+            <h1 class="risk-title">{drought['mean_score']:.2f}</h1>
+            <h3 class="risk-level">{drought['risk_level']} Risk (SCENARIO)</h3>
+            <p class="risk-body">{drought['recommendation']}</p>
             <hr style="border-color: {drought['risk_color']};">
-            <p style="color: #FFF; margin: 0.5rem 0;"><strong>Pre-generated demonstration scenario. No live analysis occurs.</p>
+            <p class="risk-subtle"><strong>Pre-generated demonstration scenario. No live analysis occurs.</strong></p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1712,11 +1782,11 @@ def display_risk_assessment(location_key):
         
         st.markdown(f"""
         <div style="background-color: {wildfire['risk_color']}22; padding: 2rem; border-radius: 0.5rem; border-left: 4px solid {wildfire['risk_color']};">
-            <h1 style="margin: 0; color: #000;">{wildfire['mean_score']:.2f}</h1>
-            <h3 style="margin: 0.5rem 0; color: #000;">{wildfire['risk_level']} Risk (SCENARIO)</h3>
-            <p style="color: #FFF; margin: 1rem 0;">{wildfire['recommendation']}</p>
+            <h1 class="risk-title">{wildfire['mean_score']:.2f}</h1>
+            <h3 class="risk-level">{wildfire['risk_level']} Risk (SCENARIO)</h3>
+            <p class="risk-body">{wildfire['recommendation']}</p>
             <hr style="border-color: {wildfire['risk_color']};">
-            <p style="color: #FFF; margin: 0.5rem 0;"><strong>Pre-generated demonstration scenario. No live analysis occurs.</p>
+            <p class="risk-subtle"><strong>Pre-generated demonstration scenario. No live analysis occurs.</strong></p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1840,10 +1910,10 @@ def main():
     # Footer
     st.markdown("---")
     st.markdown("""
-    <div style="text-align: center; color: #666; padding: 1rem;">
+    <div style="text-align: center; color: var(--text-muted); padding: 1rem;">
         <p><strong>ALLSAT AI - Environmental Warning & Intelligence System</strong></p>
         <p>EWIS outputs are provided for evaluation and demonstration purposes only and are not intended for operational,
-regulatory, or decision-making use.</p>
+        regulatory, or decision-making use.</p>
         <p>Sentinel-2 Satellite Imagery + ERA5-Land Climate Data </p>
     </div>
     """, unsafe_allow_html=True)
