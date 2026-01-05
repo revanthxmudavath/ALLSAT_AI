@@ -1282,7 +1282,6 @@ Static Demo Version - Prineville, Oregon
 """
 
 import streamlit as st
-import streamlit.components.v1 as components
 from pathlib import Path
 import sys
 
@@ -1306,150 +1305,191 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def apply_theme(theme: str):
-    components.html(
-        f"""
-        <script>
-          const theme = "{theme}";
-          document.documentElement.setAttribute("data-theme", theme);
-        </script>
-        """,
-        height=0,
-    )
+# Initialize theme in session state
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
 
-st.markdown("""
-<style>
+# Apply theme CSS based on current session state
+def apply_theme_css():
+    """Inject CSS based on current theme - called on every rerun"""
+    theme = st.session_state.theme
+    
+    st.markdown(f"""
+    <style>
+    /* Force theme attribute on html element */
+    html {{
+        color-scheme: {theme};
+    }}
+    
+    :root {{
+      --text-strong: #ffffff;
+      --text-default: #e5e7eb;
+      --text-muted: #9ca3af;
+      
+      --card-bg: rgba(255,255,255,0.06);
+      --card-border: rgba(255,255,255,0.12);
+      
+      --chip-bg: rgba(255,255,255,0.08);
+      --chip-border: rgba(255,255,255,0.12);
+      --chip-text: #e5e7eb;
+      
+      --risk-title: #ffffff;
+      --risk-body: #ffffff;
+      --risk-subtle: rgba(255,255,255,0.85);
+      
+      --app-bg: #0e1117;
+      --sidebar-bg: #262730;
+    }}
+    
+    /* Light theme overrides */
+    {"" if theme == "dark" else """
+    :root {
+      --text-strong: #0f172a;
+      --text-default: #111827;
+      --text-muted: #4b5563;
+      
+      --card-bg: #ffffff;
+      --card-border: #e5e7eb;
+      
+      --chip-bg: #f4f6f8;
+      --chip-border: #e2e8f0;
+      --chip-text: #334155;
+      
+      --risk-title: #0f172a;
+      --risk-body: #111827;
+      --risk-subtle: #374151;
+      
+      --app-bg: #ffffff;
+      --sidebar-bg: #f8fafc;
+    }
+    """}
+    
+    /* Apply backgrounds to Streamlit containers */
+    [data-testid="stAppViewContainer"] {{
+      background: var(--app-bg);
+      color: var(--text-default);
+    }}
+    
+    [data-testid="stSidebar"] {{
+      background: var(--sidebar-bg);
+    }}
+    
+    .stApp {{
+      color: var(--text-default);
+    }}
+    
+    /* Component styles */
+    .main-header {{
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: {"#1f77b4" if theme == "dark" else "#0066cc"};
+      text-align: center;
+      margin-bottom: 1rem;
+    }}
+    
+    .sub-header {{
+      font-size: 1.2rem;
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }}
+    
+    .ewis-note {{
+      margin: 0.75rem auto 1.25rem auto;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      font-size: 0.95rem;
+      line-height: 1.35;
+      color: {"#2d3748" if theme == "light" else "#fef3c7"};
+      background: {"#fffaf0" if theme == "light" else "#78350f"};
+      border: 1px solid {"#fed7aa" if theme == "light" else "#fbbf24"};
+      border-radius: 0.75rem;
+    }}
+    
+    .demo-tag-wrap {{
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }}
+    
+    .demo-tag {{
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--chip-text);
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      border-radius: 999px;
+      padding: 0.2rem 0.7rem;
+      letter-spacing: 0.02em;
+    }}
+    
+    .metric-card {{
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin: 0.5rem 0;
+    }}
+    
+    .alert-critical {{
+      background-color: {"#ffebee" if theme == "light" else "#7f1d1d"};
+      color: {"#333" if theme == "light" else "#fecaca"};
+      padding: 1rem;
+      border-left: 4px solid {"#f44336" if theme == "light" else "#ef4444"};
+      margin: 0.5rem 0;
+    }}
+    
+    .alert-high {{
+      background-color: {"#fff3e0" if theme == "light" else "#78350f"};
+      color: {"#333" if theme == "light" else "#fef3c7"};
+      padding: 1rem;
+      border-left: 4px solid {"#ff9800" if theme == "light" else "#fbbf24"};
+      margin: 0.5rem 0;
+    }}
+    
+    .alert-medium {{
+      background-color: {"#e3f2fd" if theme == "light" else "#1e3a8a"};
+      color: {"#333" if theme == "light" else "#dbeafe"};
+      padding: 1rem;
+      border-left: 4px solid {"#2196f3" if theme == "light" else "#60a5fa"};
+      margin: 0.5rem 0;
+    }}
+    
+    /* Risk card text helpers */
+    .risk-title {{ 
+      color: var(--risk-title); 
+      margin: 0; 
+    }}
+    
+    .risk-level {{ 
+      color: var(--risk-title); 
+      margin: 0.5rem 0; 
+    }}
+    
+    .risk-body {{ 
+      color: var(--risk-body); 
+      margin: 1rem 0; 
+    }}
+    
+    .risk-subtle {{ 
+      color: var(--risk-subtle); 
+      margin: 0.5rem 0; 
+    }}
+    
+    /* Fix Streamlit's metric labels in light mode */
+    {"" if theme == "dark" else """
+    [data-testid="stMetricLabel"] {
+      color: var(--text-muted) !important;
+    }
+    [data-testid="stMetricValue"] {
+      color: var(--text-strong) !important;
+    }
+    """}
+    </style>
+    """, unsafe_allow_html=True)
 
-:root{
-  --text-strong: #ffffff;      /* used only where you opt into vars */
-  --text-default: #e5e7eb;
-  --text-muted: #9ca3af;
-
-  --card-bg: rgba(255,255,255,0.06);
-  --card-border: rgba(255,255,255,0.12);
-
-  --chip-bg: rgba(255,255,255,0.08);
-  --chip-border: rgba(255,255,255,0.12);
-  --chip-text: #e5e7eb;
-
-  --risk-title: #ffffff;
-  --risk-body: #ffffff;        /* IMPORTANT: dark mode keeps white text */
-  --risk-subtle: rgba(255,255,255,0.85);
-}
-
-
-html[data-theme="light"], html[data-theme="Light"]{
-  --text-strong:#0f172a;
-  --text-default:#111827;
-  --text-muted:#4b5563;
-
-  --card-bg:#ffffff;
-  --card-border:#e5e7eb;
-
-  --chip-bg:#f4f6f8;
-  --chip-border:#e2e8f0;
-  --chip-text:#334155;
-
-  --risk-title:#0f172a;
-  --risk-body:#111827;
-  --risk-subtle:#374151;
-}
-            
-html[data-theme="light"] [data-testid="stAppViewContainer"]{
-  background: #ffffff;
-}
-
-html[data-theme="light"] [data-testid="stSidebar"]{
-  background: #f8fafc;
-}
-
-html[data-theme="light"] .stApp{
-  color: var(--text-default);
-}
-
-
-.main-header {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #1f77b4;
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.sub-header {
-  font-size: 1.2rem;
-  text-align: center;
-  color: #666;
-  margin-bottom: 2rem;
-}
-
-.ewis-note {
-  margin: 0.75rem auto 1.25rem auto;
-  padding: 0.75rem 1rem;
-  text-align: center;
-  font-size: 0.95rem;
-  line-height: 1.35;
-  color: #2d3748;
-  background: #fffaf0;
-  border: 1px solid #fed7aa;
-  border-radius: 0.75rem;
-}
-
-.demo-tag-wrap {
-  text-align: center;
-  margin-bottom: 0.5rem;
-}
-.demo-tag {
-  display: inline-block;
-  font-size: 0.8rem;
-  font-weight: 600;
-
-  color: var(--chip-text);
-  background: var(--chip-bg);
-  border: 1px solid var(--chip-border);
-
-  border-radius: 999px;
-  padding: 0.2rem 0.7rem;
-  letter-spacing: 0.02em;
-}
-
-
-.metric-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--card-border);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin: 0.5rem 0;
-}
-
-.alert-critical {
-  background-color: #ffebee;
-  padding: 1rem;
-  border-left: 4px solid #f44336;
-  margin: 0.5rem 0;
-}
-.alert-high {
-  background-color: #fff3e0;
-  padding: 1rem;
-  border-left: 4px solid #ff9800;
-  margin: 0.5rem 0;
-}
-.alert-medium {
-  background-color: #e3f2fd;
-  padding: 1rem;
-  border-left: 4px solid #2196f3;
-  margin: 0.5rem 0;
-}
-
-/* Risk card text helpers */
-.risk-title { color: var(--risk-title); margin: 0; }
-.risk-level { color: var(--risk-title); margin: 0.5rem 0; }
-.risk-body  { color: var(--risk-body);  margin: 1rem 0; }
-.risk-subtle{ color: var(--risk-subtle); margin: 0.5rem 0; }
-
-</style>
-""", unsafe_allow_html=True)
-
+# Call this on every rerun
+apply_theme_css()
 
 def display_vegetation_analysis(location_key):
     """Display vegetation analysis results"""
@@ -1546,16 +1586,14 @@ def display_vegetation_analysis(location_key):
     st.warning("**NOTE:** Severity labels shown are pre-generated examples for demonstration purposes only.")
     
     if veg_data['alerts']:
-        pass
-        
         for i, alert in enumerate(veg_data['alerts'], 1):
             severity_class = f"alert-{alert['severity'].lower()}"
             
             st.markdown(f"""
-            <div class="{severity_class}" style="color: #333;">
-                <h4 style="color: #000; margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']} (EXAMPLE)] {alert['title']}</h4>
-                <p style="color: #333; margin: 0.25rem 0;"><strong>Message:</strong> {alert['message']}</p>
-                <p style="color: #555; margin: 0.25rem 0;">💡 <em>{alert['recommendation']}</em></p>
+            <div class="{severity_class}">
+                <h4 style="margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']} (EXAMPLE)] {alert['title']}</h4>
+                <p style="margin: 0.25rem 0;"><strong>Message:</strong> {alert['message']}</p>
+                <p style="margin: 0.25rem 0;">💡 <em>{alert['recommendation']}</em></p>
             </div>
             """, unsafe_allow_html=True)
     else:
@@ -1564,17 +1602,15 @@ def display_vegetation_analysis(location_key):
     st.markdown("---")
     
     # Visualizations
-    st.markdown("## 🗺️ Exmaple Satellite Imagery Analysis")
+    st.markdown("## 🗺️ Example Satellite Imagery Analysis")
     
     # Display the sentinel image
     if 'sentinel' in veg_data['images']:
-        # Use Path to handle both Windows and Unix separators
         image_path = Path("demo") / veg_data['images']['sentinel']
         
         if image_path.exists():
             st.image(str(image_path), width='stretch')
         else:
-            # Try alternate location at root level
             alt_path = Path(veg_data['images']['sentinel'])
             if alt_path.exists():
                 st.image(str(alt_path), width='stretch')
@@ -1666,19 +1702,17 @@ def display_climate_analysis(location_key):
     # Alerts
     st.markdown("## ⚠️ Pre-generated Demonstration Indicator Status")
     
-    
     if climate_data['alerts']:
         st.warning("**NOTE:** Severity labels shown are pre-generated examples for demonstration purposes only.")
-    
         
         for i, alert in enumerate(climate_data['alerts'], 1):
             severity_class = f"alert-{alert['severity'].lower()}"
             
             st.markdown(f"""
-            <div class="{severity_class}" style="color: #333;">
-                <h4 style="color: #000; margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']} (EXAMPLE)] {alert['title']}</h4>
-                <p style="color: #333; margin: 0.25rem 0;"><strong>Message:</strong> {alert['message']}</p>
-                <p style="color: #555; margin: 0.25rem 0;">💡 <em>{alert['recommendation']}</em></p>
+            <div class="{severity_class}">
+                <h4 style="margin: 0 0 0.5rem 0;">[{i}] [{alert['severity']} (EXAMPLE)] {alert['title']}</h4>
+                <p style="margin: 0.25rem 0;"><strong>Message:</strong> {alert['message']}</p>
+                <p style="margin: 0.25rem 0;">💡 <em>{alert['recommendation']}</em></p>
             </div>
             """, unsafe_allow_html=True)
     else:
@@ -1833,19 +1867,18 @@ def display_risk_assessment(location_key):
         st.warning("⚠️ No risk visualizations available for this location")
 
 def main():
-    # Header
-    
-    if "theme" not in st.session_state:
-        st.session_state.theme = "dark"
-
+    # Header with theme toggle
     top_left, top_right = st.columns([0.82, 0.18])
 
     with top_right:
-        light_on = st.toggle("☀️ / 🌑 Theme", value=(st.session_state.theme == "light"))
+        # Toggle updates session state, which triggers a rerun
+        light_on = st.toggle(
+            "☀️ Light / 🌑 Dark", 
+            value=(st.session_state.theme == "light"),
+            key="theme_toggle"
+        )
+        # Update session state based on toggle
         st.session_state.theme = "light" if light_on else "dark"
-
-
-    apply_theme(st.session_state.theme)
 
     st.markdown(
         '<div class="demo-tag-wrap"><span class="demo-tag">Pre-generated Demonstration Prototype</span></div>',
