@@ -1327,27 +1327,6 @@ st.markdown("""
 
 
 @media (prefers-color-scheme: light) {
-            
-  div.stButton > button {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;   /* stronger than default */
-    color: #0f172a;
-    border-radius: 10px;
-    padding: 0.55rem 0.9rem;
-    font-weight: 600;
-    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
-    transition: all 120ms ease;
-  }
-
-  div.stButton > button:hover {
-    border-color: #94a3b8;
-    background: #f8fafc;
-  }
-
-  div.stButton > button:focus {
-    outline: 2px solid rgba(31, 119, 180, 0.25);
-    outline-offset: 2px;
-  }
   :root{
     --text-strong: #0f172a;
     --text-default: #111827;
