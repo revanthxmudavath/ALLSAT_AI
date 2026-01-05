@@ -246,7 +246,7 @@ def get_theme_css(theme: str):
         }
 
         [data-testid="stSidebar"] {
-            background: #262730;
+            background: #1f2937;
         }
 
         .stApp {
